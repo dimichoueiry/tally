@@ -373,7 +373,8 @@ export class Controller {
     this._syncBar();
     this.netFrom = Date.now();
     this.cpuStart = this._cpuNow();
-    await this._engine('start');
+    const started = await this._engine('start');
+    this.log(`recorder started ${JSON.stringify(started)}`);
     this._watchDisk();
   }
 
@@ -593,7 +594,7 @@ export class Controller {
       this.sessionDir = null;
       clearTimeout(slow);
       this.lastSaved = res.file;
-      this.log(`saved ${res.file} remuxed=${res.remuxed}${res.skipped ? ` (${res.skipped})` : ''} duration=${res.duration} frames=${stats.frames} chunks=${stats.chunks} lateTicks=${stats.lateTicks} generator=${stats.generator} activeMs=${stats.durationMs} mime=${stats.mimeType}`);
+      this.log(`saved ${res.file} remuxed=${res.remuxed}${res.skipped ? ` (${res.skipped})` : ''} duration=${res.duration} frames=${stats.frames} chunks=${stats.chunks} lateTicks=${stats.lateTicks} generator=${stats.generator} activeMs=${stats.durationMs} mime=${stats.mimeType} warmup=${stats.warmup ? (stats.warmup.ok ? `${stats.warmup.frames}f/${stats.warmup.ms}ms` : `skipped (${stats.warmup.reason})`) : 'none'} startEventMs=${stats.startEventMs}`);
       this.log(`perf ${JSON.stringify({ perf: stats.perf, audio: stats.audio, cpu, net: netSummary })}`);
       this.lastStats = { ...stats, thumb: undefined, cpu, net: netSummary, file: res.file };
       const entry = await this.library.entry(res.file);

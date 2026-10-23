@@ -7,6 +7,7 @@ import { openCamera, stopStream, FaceTracker, drawBubble } from '../shared/camer
 import { CameraBackground } from '../shared/bg/background.js';
 import { clampZoom } from '../../shared/geometry.js';
 import { SYSTEM_AUDIO, VIDEO_BPS, AUDIO_BPS } from '../../shared/media.js';
+import { warmEncoder, settleWarmup } from './warmup.js';
 import { pickMic, micConstraints, buildMixGraph, connectInput, disconnectInput, peakOf } from '../../shared/mic.js';
 
 const FPS = 30;
@@ -223,7 +224,8 @@ navigator.mediaDevices.addEventListener('devicechange', () => S && reopenMic(S))
 
 // One output frame: the canvas as it is now.
 function emitFrame() {
-  const ts = Math.round((S.frames * 1e6) / FPS);
+  // Continues after the warm-up frames: the track's timestamps never go back.
+  const ts = Math.round(S.tsBase + (S.frames * 1e6) / FPS);
   if (S.writer) {
     const vf = new VideoFrame(S.canvas, { timestamp: ts, duration: Math.round(1e6 / FPS) });
     S.lastWrite = S.writer.write(vf).catch(() => {}).finally(() => vf.close());
@@ -314,6 +316,42 @@ function setBackground(b) {
   S.bg?.setMode(mode, b?.bgImage);
 }
 
+// The recorder for a session (the take, and the throwaway warm-up one).
+function makeRecorder(sess) {
+  const mimeType = sess.audio ? AV_MIMES.find((m) => MediaRecorder.isTypeSupported(m)) : VIDEO_MIME;
+  if (!mimeType) throw new Error('No MP4 audio encoder');
+  // 1 s keyframe interval → a fragment (and an IPC chunk) per second, so a crash
+  // loses at most ~1 s. Chromium-specific option; ignored where unsupported.
+  return new MediaRecorder(sess.out, {
+    mimeType,
+    videoBitsPerSecond: VIDEO_BPS[sess.quality === 'native' ? 'native' : '1080p'],
+    ...(sess.audio ? { audioBitsPerSecond: AUDIO_BPS } : {}),
+    videoKeyFrameIntervalDuration: 1000,
+  });
+}
+
+// ~0.5 s of frames into a throwaway recorder during the countdown (warmup.js). Its
+// frames take timestamps 0…0.5 s; the take's frames continue after them.
+async function warmUp(sess) {
+  const per = 1e6 / FPS;
+  const r = await warmEncoder({
+    makeRecorder: () => makeRecorder(sess),
+    emit: (i) => {
+      if (S !== sess) return;
+      compose();
+      if (sess.writer) {
+        const vf = new VideoFrame(sess.canvas, { timestamp: Math.round(i * per), duration: Math.round(per) });
+        sess.writer.write(vf).catch(() => {}).finally(() => vf.close());
+      } else sess.track.requestFrame();
+      sess.tsBase = Math.round((i + 1) * per);
+    },
+    signal: sess.warmCtl.signal,
+  }).catch((e) => ({ ok: false, reason: e.message }));
+  log(r.ok ? `encoder warmed: ${r.frames} frames in ${r.ms} ms` : `encoder warm-up skipped (${r.reason}); cold start`);
+  if (S === sess) compose(); // the take's first frame shows the screen as it is now
+  return r;
+}
+
 const api = {
   async prepare({ kind, quality, camera, bubble, captureScale, systemAudio, mic, mask }) {
     await api.abort();
@@ -384,6 +422,10 @@ const api = {
       if (!S.thumb && S.frames >= FPS) S.thumb = thumbnail();
     });
     compose(); // first frame ready before start
+    // Warm the encoder while the countdown runs (not awaited: prepare isn't longer).
+    S.tsBase = 0;
+    S.warmCtl = new AbortController();
+    S.warm = warmUp(S);
     return {
       width, height, source: [screen.video.videoWidth, screen.video.videoHeight], camera: !!S.cam, settings: screen.track.getSettings(),
       audio: S.audio ? { system: S.audio.info.system, mic: S.audio.info.mic, context: S.audio.ac.state } : null,
@@ -394,16 +436,11 @@ const api = {
 
   async start() {
     const sess = S;
-    const mimeType = sess.audio ? AV_MIMES.find((m) => MediaRecorder.isTypeSupported(m)) : VIDEO_MIME;
-    if (!mimeType) throw new Error('No MP4 audio encoder');
-    // 1 s keyframe interval → a fragment (and an IPC chunk) per second, so a crash
-    // loses at most ~1 s. Chromium-specific option; ignored where unsupported.
-    const rec = new MediaRecorder(sess.out, {
-      mimeType,
-      videoBitsPerSecond: VIDEO_BPS[sess.quality === 'native' ? 'native' : '1080p'],
-      ...(sess.audio ? { audioBitsPerSecond: AUDIO_BPS } : {}),
-      videoKeyFrameIntervalDuration: 1000,
-    });
+    // The warm-up finished during the countdown; a countdown cut short waits ≤ 1 s.
+    const warm = await settleWarmup(sess.warm, 1000);
+    if (sess !== S) throw new Error('session ended');
+    sess.warmResult = warm || { ok: false, reason: 'still warming at start' };
+    const rec = makeRecorder(sess);
     sess.recorder = rec;
     rec.ondataavailable = (e) => {
       if (!e.data.size || sess.discard) return;
@@ -414,11 +451,17 @@ const api = {
         sess.chunks = (sess.chunks || 0) + 1;
       });
     };
+    // The clock starts with the recorder, not after its 'start' event: Chromium only
+    // fires that once media flows, so waiting for it held the frames back (~0.5 s) while
+    // the audio was already recording (audio ahead of video). The warm-up is what makes
+    // the first frames reach a running encoder; the event's delay is only logged.
+    const t0 = performance.now();
+    rec.addEventListener('start', () => (sess.startEventMs = Math.round(performance.now() - t0)), { once: true });
     rec.start(1000);
     S.runningSince = performance.now();
     S.tickBase = 0;
     S.clock.start();
-    return { mimeType: rec.mimeType };
+    return { mimeType: rec.mimeType, warmup: sess.warmResult };
   },
 
   // Pause/resume settle asynchronously inside MediaRecorder. Frames written while
@@ -530,6 +573,8 @@ const api = {
       height: sess.canvas.height,
       cameraUsed: sess.cameraUsed,
       mimeType: sess.recorder.mimeType,
+      warmup: sess.warmResult || null,
+      startEventMs: sess.startEventMs ?? null,
       audio: sess.audio
         ? {
             peak: { system: +sess.audio.peak.system.toFixed(4), mic: +sess.audio.peak.mic.toFixed(4) },
@@ -548,6 +593,7 @@ const api = {
   async abort() {
     if (!S) return;
     S.discard = true;
+    S.warmCtl?.abort(); // cancel or restart during the countdown: the warm-up stops too
     try {
       S.clock?.stop();
       if (S.recorder && S.recorder.state !== 'inactive') S.recorder.stop();
@@ -576,6 +622,7 @@ function thumbnail() {
 
 function teardown() {
   if (!S) return;
+  S.warmCtl?.abort();
   S.clock?.dispose();
   stopStream(S.screen.stream);
   stopStream(S.cam?.stream);
