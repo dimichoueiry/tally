@@ -176,18 +176,53 @@ export const FPS = 30;
 const REMUX_MARGIN = 200 * 1024 * 1024; // keep this much free after the remuxed copy
 
 // Copy-remux to a regular MP4 with the moov up front (+faststart). Never re-encodes.
-// The compositor emits exactly one frame per 30 fps clock tick, so frame N is
-// stamped at N/30 s (setts on the video only): the file is constant 30 fps, free of
-// the encoder's arrival-time jitter. Safe because Chromium's H.264 has no B-frames
-// (pts = dts). Audio (system audio and/or the mic), when recorded, is copied with its
-// own timestamps and cut where the video ends (-shortest): the recorder's stop drain
-// leaves ~0.3 s of audio after the last frame.
-function remux(ffmpeg, input, output) {
-  const ts = `N/(${FPS}*TB)`;
+// The compositor emits one frame per 30 fps clock tick, but the recorder stamps frames
+// with their arrival time (jitter up to ~half a frame), and it can drop frames (the
+// packaged app loses ~0.3 s right after the first frame while the encoder warms up).
+// Each frame is snapped to its nearest 1/30 s slot, never sharing a slot with the one
+// before: the file is constant 30 fps and a dropped stretch stays where it happened (the
+// previous frame shows), so audio stays in sync. (A plain N/30 renumbering closed such
+// holes and slid every later frame ~0.3 s ahead of the audio.) Safe because Chromium's
+// H.264 has no B-frames (pts = dts). The video is authoritative: every frame is kept.
+// Audio is copied with its own timestamps and only its tail is cut at the video's end;
+// audio that ends early is left as is. (This used to be -shortest, which cut frames.)
+const SLOT = `round(PTS*TB*${FPS})/(${FPS}*TB)`;
+// Commas inside a bitstream-filter option are escaped for ffmpeg's option parser.
+export const SNAP_TS = `if(eq(N\\,0)\\,${SLOT}\\,max(PREV_OUTPTS+1/(${FPS}*TB)\\,${SLOT}))`;
+
+// `span`: the video's length in frames (recorder's count of ticks, or measured).
+export function remuxArgs(input, output, span) {
+  // Read the audio from a second, time-limited copy of the input: -t before an -i only
+  // limits that input, so the video (input 0) is never shortened.
+  const audioIn = span > 0 ? ['-t', (span / FPS).toFixed(6), '-i', input] : ['-i', input];
+  return ['-v', 'error', '-y', '-i', input, ...audioIn, '-map', '0:v:0', '-map', '1:a?', '-c', 'copy', '-bsf:v', `setts=pts=${SNAP_TS}:dts=${SNAP_TS}`, '-video_track_timescale', String(FPS * 1000), '-movflags', '+faststart', output];
+}
+
+// The video's span in 30 fps slots (last frame's time × 30 + 1), for when the recorder's
+// own count is unknown (crash recovery). Packet timestamps only, no decode
+// (-show_entries packet=pts_time), under its own time limit: on a failure or timeout it
+// returns null, and the audio is left uncut rather than guessed.
+export const PROBE_MS = 10_000;
+export function countVideoFrames(ffmpeg, file, { ffprobe = ffmpeg && path.join(path.dirname(ffmpeg), 'ffprobe'), timeoutMs = PROBE_MS } = {}) {
+  if (!ffprobe || !fs.existsSync(ffprobe)) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    execFile(ffprobe, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time', '-of', 'csv=p=0', file], { timeout: timeoutMs, killSignal: 'SIGKILL', maxBuffer: 64 * 1024 * 1024 }, (err, out) => {
+      if (err) return resolve(null);
+      let last = -1;
+      for (const l of String(out).split('\n')) {
+        const t = parseFloat(l);
+        if (Number.isFinite(t) && t > last) last = t;
+      }
+      resolve(last >= 0 ? Math.round(last * FPS) + 1 : null);
+    });
+  });
+}
+
+// `frames`: the recorder's count of 30 fps ticks (a normal Stop): no probe at all.
+export async function remux(ffmpeg, input, output, { frames: known = null, probe = {} } = {}) {
+  const frames = known > 0 ? known : await countVideoFrames(ffmpeg, input, probe);
   return new Promise((resolve, reject) => {
-    execFile(ffmpeg, ['-v', 'error', '-y', '-i', input, '-map', '0:v:0', '-map', '0:a?', '-c', 'copy', '-bsf:v', `setts=pts=${ts}:dts=${ts}`, '-video_track_timescale', String(FPS * 1000), '-shortest', '-movflags', '+faststart', output], (err, _o, stderr) =>
-      err ? reject(new Error(stderr || err.message)) : resolve(),
-    );
+    execFile(ffmpeg, remuxArgs(input, output, frames), (err, _o, stderr) => (err ? reject(new Error(stderr || err.message)) : resolve({ frames })));
   });
 }
 
@@ -338,7 +373,7 @@ export function freeBytes(dir) {
 // crash recovery. Returns { file, duration, fragments, droppedBytes, remuxed }.
 // The remux (a second full copy) only runs when the disk has room for it; otherwise
 // the fragmented MP4 is kept as the final file (it plays; seeking is slower).
-export async function finalizeSession(dir, libraryDir, baseName, { ffmpeg = findFfmpeg(), log = () => {}, free = freeBytes } = {}) {
+export async function finalizeSession(dir, libraryDir, baseName, { ffmpeg = findFfmpeg(), log = () => {}, free = freeBytes, videoFrames = null, probe = {} } = {}) {
   const joined = await joinInPlace(dir);
   const repaired = joined ? await repairFile(joined) : { ok: false, reason: 'no-segments' };
   if (!repaired.ok) {
@@ -357,7 +392,7 @@ export async function finalizeSession(dir, libraryDir, baseName, { ffmpeg = find
     } else {
       const out = path.join(dir, 'final.mp4');
       try {
-        await remux(ffmpeg, joined, out);
+        await remux(ffmpeg, joined, out, { frames: videoFrames, probe });
         src = out;
         remuxed = true;
         await fsp.rm(joined, { force: true });

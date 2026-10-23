@@ -575,11 +575,12 @@ export class Controller {
       const out = await guardedFinalize({
         stop: () => this._engine('stop'),
         close: () => this.writer.close(),
-        finalize: () => {
+        finalize: (engineStats) => {
           if (fake === 'error') throw new Error('Forced finalize error (dev)');
           if (fake === 'hang') return new Promise(() => {});
           const written = this.writer.bytes;
-          return finalizeSession(this.sessionDir, libDir, this.baseName, { log: this.log, ...(fakeFree ? { free: () => fakeFree * 1e6 - written } : {}) });
+          // The recorder's frame count sets the video length: no probe of the file.
+          return finalizeSession(this.sessionDir, libDir, this.baseName, { log: this.log, videoFrames: engineStats?.frames, ...(fakeFree ? { free: () => fakeFree * 1e6 - written } : {}) });
         },
         bytes: () => this.writer?.bytes || 0,
       }, fake === 'hang' ? { budget: () => 3000 } : {});

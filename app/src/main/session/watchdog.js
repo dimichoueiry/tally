@@ -14,13 +14,13 @@ export function withTimeout(promise, ms, what) {
   return Promise.race([promise, late]).finally(() => clearTimeout(t));
 }
 
-// steps: stop() → engine stats, close() → last bytes on disk, finalize() → { file, … }.
+// steps: stop() → engine stats, close() → last bytes on disk, finalize(stats) → { file, … }.
 // A finalize that ran out of time may still finish on its own: the error carries it
 // as `job`, so "Save what was recorded" can wait for it instead of racing it.
 export async function guardedFinalize({ stop, close, finalize, bytes = () => 0 }, { stepMs = STEP_MS, budget = copyBudgetMs } = {}) {
   const stats = await withTimeout(Promise.resolve().then(stop), stepMs, 'Stopping the recorder');
   await withTimeout(Promise.resolve().then(close), stepMs, 'Writing the last part');
-  const job = Promise.resolve().then(finalize);
+  const job = Promise.resolve().then(() => finalize(stats));
   try {
     const res = await withTimeout(job, budget(bytes()), 'Finishing the file');
     if (!res?.file) throw new Error(`Nothing playable was recorded (${res?.reason || 'empty'})`);
