@@ -17,7 +17,7 @@ Not sure? Apple menu › **About This Mac**: "Chip: Apple M…" is Apple Silicon
 2. Tally is unsigned, so macOS blocks the first launch: open Tally, then **System Settings › Privacy & Security › Open Anyway**.
 3. If macOS says the app "is damaged": `xattr -dr com.apple.quarantine /Applications/Tally.app`, then open it again.
 4. Allow **Screen & System Audio Recording** and **Camera** (and **Microphone** if you turn it on), then quit and reopen Tally.
-5. **After each update:** remove Tally in *Privacy & Security › Screen & System Audio Recording* (**–**) and add it back by opening Tally again.
+5. **Updating from 0.1.0:** remove Tally in *Privacy & Security › Screen & System Audio Recording* (**–**) and add it back by opening Tally, one last time. From 0.1.1 on, Tally is signed with a stable certificate, so updates keep the permission.
 
 Each release lists the SHA-256 of both DMGs so you can check the download (`shasum -a 256 Tally-*.dmg`).
 
@@ -37,7 +37,7 @@ Open the DMG for your Mac (arm64 for Apple Silicon, x64 for Intel) and drag Tall
 Because the app is unsigned:
 - **First launch:** macOS blocks it. Open **System Settings › Privacy & Security** and click **Open Anyway** (macOS 15+), or right-click Tally › **Open** (macOS 13–14).
 - **Screen Recording:** allow Tally in *Privacy & Security › Screen & System Audio Recording*, then quit and reopen it.
-- **After updating:** each build has a new signature, so macOS may not recognise the old permission. Remove Tally from *Screen & System Audio Recording* (the **–** button), open Tally, and allow it again.
+- **After updating:** release builds from 0.1.1 keep the permission. A build you make yourself is signed ad-hoc unless your keychain has a trusted "Tally Local" code-signing identity, so macOS may not recognise the old permission: remove Tally from *Screen & System Audio Recording* (the **–** button), open Tally, and allow it again.
 
 Full details: [INSTALL.md](INSTALL.md). To run from source without packaging, see [app/README.md](app/README.md).
 
