@@ -211,3 +211,7 @@ button.mrow:hover, .mrow.hl, .mrow[role=menuitemradio][aria-checked="true"] { ba
 .pvdot { width: 16px; height: 36px; flex: none; display: grid; place-items: center; color: var(--fg-2); }
 .pvdot svg.i { width: 14px; height: 14px; }
 .mrow > .i.chev { width: 16px; height: 16px; color: var(--fg-3); }
+
+/* A notice with instructions (stale Screen Recording grant): wraps instead of one line */
+.notice.wrap { white-space: normal; max-width: 460px; align-items: flex-start; line-height: 1.45; padding-top: 8px; padding-bottom: 8px; }
+.notice.wrap > .i { margin-top: 1px; }

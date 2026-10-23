@@ -1,7 +1,7 @@
 {
   "name": "tally",
   "productName": "Tally",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Local-only screen + camera recorder.",
   "main": "src/main/index.js",
@@ -12,7 +12,7 @@
     "icons": "node scripts/make-icons.js",
     "vendor": "node scripts/vendor.mjs",
     "postinstall": "node scripts/vendor.mjs",
-    "dist:mac": "npm run native && npm test && NODE_OPTIONS=--experimental-require-module electron-builder --mac dmg --arm64 --x64",
+    "dist:mac": "npm run native && npm test && node scripts/dist-mac.mjs",
     "dist:win": "NODE_OPTIONS=--experimental-require-module electron-builder --win nsis --x64"
   },
   "devDependencies": {

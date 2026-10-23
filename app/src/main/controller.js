@@ -12,6 +12,7 @@ import { SegmentWriter, sessionsRoot, finalizeSession } from './session/segments
 import { defaultBaseName, sourceLabel, splitExt } from './library/names.js';
 import { bubbleSize, constrainToWindow, relToWindow, snapRect, clampRect, defaultBubbleRect, INSET, anchorFor, resizeAnchored, trayRect, sizesThatFit, SIZES, TRAY_MIN_W } from '../shared/geometry.js';
 import { screenStatus } from './permissions.js';
+import { isStaleGrant, STALE_GRANT_TEXT } from './permAdvice.js';
 import { findSource, screenSourceForDisplay, displayUnderPointer, displayInfo } from './sources.js';
 import { watchWindow, boundsOnce, listWindows } from './winbounds.js';
 import { placePill, barWindow, snapPos, homePos, displayAt, FOLDED_W, BAR_H, MOVE_STEP } from '../shared/toolbar.js';
@@ -363,6 +364,7 @@ export class Controller {
   }
 
   async _startRecording() {
+    this.staleGrant = false; // capture started, so the grant works
     const id = `${Date.now()}`;
     this.sessionDir = path.join(sessionsRoot(this.settings.get().libraryDir), id);
     const startedAt = new Date();
@@ -688,7 +690,11 @@ export class Controller {
       this._teardown({ discard: false });
     }
     this.lastError = String(e.message || e);
+    // Capture refused although the permission reads 'granted': a stale grant (LC-19).
+    this.staleGrant = isStaleGrant(e, screenStatus());
+    if (this.staleGrant) this.noticeDismissed?.delete('stale');
     this._broadcast();
+    if (this.staleGrant && this.s.state === 'idle' && !this._inSetup()) this.onBlocked?.(); // setup's notice says what to do
   }
 
   // ───────── bar ─────────
@@ -763,6 +769,7 @@ export class Controller {
     const d = diskPreflight(free, st.quality.size, st.systemAudio || st.mic.on);
     if (d.level === 'block') return { kind: 'disk', tone: 'bad', text: 'Less than 1 GB free. Free up space to record.' };
     if (st.mic.on && ['denied', 'restricted'].includes(this.micStatus())) return { kind: 'micperm', tone: 'warn', icon: 'mic-off', text: 'Microphone is off for Tally. Recordings will have no voice.', action: 'Open Settings' };
+    if (this.staleGrant && !this.noticeDismissed?.has('stale')) return { kind: 'perm', tone: 'bad', text: STALE_GRANT_TEXT, action: 'Open Settings', wrap: true };
     if (this.lastError && !this.noticeDismissed?.has('error')) return { kind: 'error', tone: 'bad', text: `The last recording stopped: ${this.lastError}`, dismiss: true };
     const failed = this.shortcutFailures();
     if (failed.length && !this.noticeDismissed?.has('shortcut')) return { kind: 'shortcut', tone: 'warn', text: `${failed.map((a) => a.replace('Alt+Shift+', process.platform === 'darwin' ? '⌥⇧' : 'Alt+Shift+')).join(', ')} is used by another app. The toolbar still works.`, dismiss: true };

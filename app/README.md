@@ -35,6 +35,7 @@ Local-only: every renderer has `connect-src 'self'`, and `src/main/netguard.js` 
 
 `npm run dist:mac` builds fat (arm64 + x86_64) native helpers, runs the tests, and writes two unsigned, ad-hoc-signed DMGs to `dist/` (gitignored): `Tally-<version>-mac-arm64.dmg` and `-mac-x64.dmg`. electron-builder 26, config in `package.json` → `build`:
 - `asar` with `native/bin/**` unpacked (executables can't run from inside the archive; `unpacked()` in `src/main/protocol.js`). MediaPipe and the models are read through `app://` from inside the asar. No `node_modules` are shipped (MediaPipe is vendored into `resources/`).
+- Signing: `scripts/dist-mac.mjs` signs with the self-signed **Tally Local** code-signing identity when the login keychain has it trusted (stable designated requirement, so macOS keeps permissions across updates), else ad-hoc (`identity: "-"`, permissions reset with every build). Test: `test/signing.test.js`.
 - Hardened runtime, `build/entitlements.mac.plist` (JIT, unsigned executable memory, library validation off for ad-hoc, camera, audio input for the optional microphone).
 - Info.plist: `NSCameraUsageDescription`, `NSMicrophoneUsageDescription` (Tally's own wording), `NSAudioCaptureUsageDescription`, `LSUIElement`. `build/afterPack.cjs` removes Electron's stock Bluetooth usage strings. Screen Recording has no Info.plist key (it is a TCC grant).
 - Node 22.11 needs `NODE_OPTIONS=--experimental-require-module` for electron-builder 26 (set in the scripts).

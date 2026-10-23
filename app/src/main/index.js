@@ -4,9 +4,10 @@ import { app, BrowserWindow, ipcMain, globalShortcut, session, shell, dialog, sc
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { registerScheme, handleProtocol } from './protocol.js';
+import { registerScheme, handleProtocol, ROOT } from './protocol.js';
 import { Settings, DEFAULTS } from './settings.js';
 import { bootLibraryDir } from './libraryDir.js';
+import { bundleIdFor } from './permAdvice.js';
 import { Library } from './library/store.js';
 import { PendingDeletes } from './library/pendingDelete.js';
 import { recoverSessions } from './session/segments.js';
@@ -251,7 +252,8 @@ function registerIpc() {
 
   h('perm:status', () => perms.screenStatus());
   h('perm:open', () => perms.openScreenSettings());
-  h('perm:reset', () => perms.resetScreenPermission(process.env.TALLY_BUNDLE_ID || 'com.github.Electron'));
+  // Reset clears Tally's own Screen Recording entry: the appId the app is packaged with.
+  h('perm:reset', () => perms.resetScreenPermission(bundleIdFor(JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')))));
   h('perm:relaunch', () => {
     app.relaunch();
     app.exit(0);

@@ -367,7 +367,7 @@ function renderNotice() {
   }
   notice.hidden = !n;
   if (!n) return;
-  notice.className = `notice glass ${n.tone === 'bad' ? 'bad' : ''}`;
+  notice.className = `notice glass ${n.tone === 'bad' ? 'bad' : ''} ${n.wrap ? 'wrap' : ''}`;
   notice.setAttribute('role', n.role || (n.tone === 'bad' ? 'alert' : 'status'));
   const act = n.kind === 'perm' || n.kind === 'micperm' ? `<button class="act" data-act="${n.kind === 'perm' ? 'screen-settings' : 'mic-settings'}">${esc(n.action)}</button>` : '';
   const x = n.dismiss ? `<button class="tx" data-act="${n.kind === 'toast' ? 'dismiss' : 'dismiss-notice'}" data-kind="${n.kind}" aria-label="Dismiss">${icon('x')}</button>` : '';
