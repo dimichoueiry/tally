@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-21T15:21:45.459Z",
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) tally-blur-spike/0.0.0 Chrome/156.0.8078.48 Electron/45.0.0 Safari/537.36",
+  "results": [
+    {
+      "name": "rec-gpu-selfie",
+      "loadMs": 108,
+      "warmMs": 152,
+      "frames": 330,
+      "firstFrameMs": 7.7,
+      "mask": "1280x720 tex=true",
+      "segMed": 0.9,
+      "segP95": 1.5,
+      "frameMed": 7.2,
+      "frameP95": 10,
+      "fps": 30,
+      "cpuRenderer": 8,
+      "cpuGpuProc": 22,
+      "cpuAll": 32
+    },
+    {
+      "name": "rec-gpu-selfie-nosync",
+      "loadMs": 50,
+      "warmMs": 95,
+      "frames": 330,
+      "firstFrameMs": 0.7,
+      "mask": "1280x720 tex=true",
+      "segMed": 0.9,
+      "segP95": 1.4,
+      "frameMed": 0.9,
+      "frameP95": 1.5,
+      "fps": 30,
+      "cpuRenderer": 8,
+      "cpuGpuProc": 22,
+      "cpuAll": 32
+    },
+    {
+      "name": "rec-cpu-selfie-nosync",
+      "loadMs": 48,
+      "warmMs": 47,
+      "frames": 330,
+      "firstFrameMs": 9.8,
+      "mask": "1280x720 tex=false",
+      "segMed": 8.3,
+      "segP95": 10.8,
+      "frameMed": 8.4,
+      "frameP95": 11,
+      "fps": 29.9,
+      "cpuRenderer": 23,
+      "cpuGpuProc": 16,
+      "cpuAll": 41
+    },
+    {
+      "name": "baseline-nosegment-nosync",
+      "loadMs": 0,
+      "warmMs": 0,
+      "frames": 330,
+      "firstFrameMs": 0.3,
+      "mask": "1280x720 tex=false",
+      "segMed": 0,
+      "segP95": 0,
+      "frameMed": 0.2,
+      "frameP95": 0.4,
+      "fps": 30,
+      "cpuRenderer": 6,
+      "cpuGpuProc": 10,
+      "cpuAll": 20
+    }
+  ]
+}

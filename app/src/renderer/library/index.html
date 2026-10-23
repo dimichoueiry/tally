@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Recordings</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<style>
+  body.app { display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; }
+  .wnd-bar { -webkit-app-region: drag; height: 52px; padding-left: 92px; }
+  .wnd-bar .title { margin-left: 0; }
+  .wnd-bar input, .wnd-bar button { -webkit-app-region: no-drag; }
+  .search { width: 220px; color: var(--fg-1); }
+  .search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: var(--fg-1); font-size: var(--t-12); }
+  .search input::placeholder { color: var(--fg-3); }
+  .search:focus-within { box-shadow: var(--focus); }
+  .rec-btn { height: 30px; padding: 0 12px; border-radius: var(--r-sm); background: var(--ready); color: var(--fg-on-ready); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+  .rec-btn .rdot { width: 8px; height: 8px; border-radius: 50%; background: var(--live); }
+  .lib { overflow-y: auto; }
+  .lib-row { width: 100%; text-align: left; cursor: default; outline: none; }
+  .lib-row:hover { background: var(--bg-2); } .lib-row:hover .ra { opacity: 1; }
+  .lib-row:focus-visible { box-shadow: var(--focus); }
+  .lib-row .vthumb { aspect-ratio: 16/10; background: var(--bg-2); }
+  .lib-row .vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lib-row .vthumb .ph { width: 100%; height: 100%; display: grid; place-items: center; color: var(--fg-3); }
+  .lib-row .t { min-width: 0; }
+  .lib-row b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lib-row .name-edit { display: flex; align-items: center; height: 30px; max-width: 420px; border-radius: var(--r-sm); background: var(--bg-0); box-shadow: var(--focus); margin: 2px 0 8px; }
+  .lib-row .name-edit.err { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--danger); }
+  .lib-row .name-edit input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--fg-1); font: 500 var(--t-13) var(--font-ui); padding-left: 10px; }
+  .lib-row .name-edit .ext { color: var(--fg-3); padding-right: 10px; font-weight: 500; }
+  .lib-row .errmsg { color: var(--danger); font-size: var(--t-12); margin: -4px 0 6px; }
+  .undo-bar { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: var(--r-md); background: var(--bg-2); box-shadow: var(--edge), var(--shadow-1); white-space: nowrap; }
+  .undo-bar small { color: var(--fg-3); }
+  .empty .mark.xl { margin-bottom: 4px; }
+  .foot-btn { color: var(--fg-1); }
+</style>
+<body class="app">
+  <div class="wnd-bar">
+    <span class="title">Recordings</span>
+    <div class="acts">
+      <label class="search"></label>
+      <button class="rec-btn" id="record"><span class="rdot"></span>Record</button>
+    </div>
+  </div>
+  <div class="lib" id="list" role="listbox" aria-label="Recordings"></div>
+  <div class="lib-foot" id="foot"></div>
+  <div id="undo"></div>
+  <script type="module" src="./library.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+/* The window is the bubble plus a 20 px transparent margin (BUBBLE_PAD) for the HUD and ring. */
+.wrap { position: absolute; left: 20px; top: 20px; transition: transform var(--d-base) var(--spring), opacity var(--d-base) var(--ease-out); }
+.wrap.hiding { opacity: 0; }
+.shadow { width: 100%; height: 100%; filter: drop-shadow(0 10px 18px rgba(0,0,0,.4)); }
+.cam { position: relative; width: 100%; height: 100%; background: #1e2a33; overflow: hidden; outline: none; cursor: grab; }
+.cam canvas { width: 100%; height: 100%; display: block; }
+.wrap.dragging { transform: scale(1.04); }
+.wrap.dragging .cam { cursor: grabbing; }
+.ring { position: absolute; inset: -4px; pointer-events: none; opacity: 0; transition: opacity var(--d-fast); }
+.wrap.dragging .ring, .wrap.focus .ring { opacity: 1; }
+.ring svg { width: 100%; height: 100%; overflow: visible; }
+.lost { position: absolute; inset: 0; display: grid; place-items: center; background: #191d1c; color: var(--fg-2); font-size: var(--t-12); text-align: center; }
+.lost .inner { display: grid; justify-items: center; gap: 6px; padding: 12px; }
+.lost .i { color: var(--hold); }
+.bub-grip, .bub-hud { opacity: 0; pointer-events: none; transition: opacity var(--d-fast) var(--ease-out); }
+.wrap.hover .bub-grip, .wrap.hover .bub-hud { opacity: 1; pointer-events: auto; }
+.bub-hud { bottom: -16px; }
+.bub-hud .sep { width: 1px; height: 16px; background: rgba(255,255,255,.08); margin: 0 2px; }
+.bub-hud .zoom .range { width: 64px; flex: none; }
+.bub-hud .zoom span { width: 30px; }
+.bub-hud .ibtn.on { color: var(--ready); }
+/* Background tag (spec 02b): preview only, top-left inside the bubble's box. */
+.bub-tag { position: absolute; left: 50%; top: 28px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 6px; border-radius: var(--r-pill); background: rgba(11,14,13,.78); backdrop-filter: blur(8px); color: var(--fg-1); font-size: var(--t-11); font-weight: 500; white-space: nowrap; pointer-events: none; box-shadow: var(--shadow-1); }
+.bub-tag .i { color: var(--fg-2); }
+.bub-tag.warn .i { color: var(--hold); }
+.wrap.hover .bub-tag { opacity: 0; }
+.bub-tag { transition: opacity var(--d-fast) var(--ease-out); }
+
+/* Setup v2: the tray (its own window) replaces the hover HUD while setting up. */
+.wrap.setup .bub-hud { display: none; }
+/* Corner size handle (SETUP_V2 §3.2, S12): shown on hover in setup, opposite the anchored corner. */
+.sizeh { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: var(--fg-1); color: var(--bg-0); box-shadow: 0 0 0 2px rgba(10,12,11,.6), 0 2px 6px rgba(0,0,0,.5); display: grid; place-items: center; z-index: 8; opacity: 0; pointer-events: none; transition: opacity var(--d-fast) var(--ease-out), transform var(--d-fast) var(--ease-out); }
+.sizeh svg.i { width: 14px; height: 14px; }
+.sizeh.ne, .sizeh.sw { cursor: nesw-resize; }
+.sizeh.nw, .sizeh.se { cursor: nwse-resize; }
+.wrap.setup.hover .sizeh, .wrap.resizing .sizeh { opacity: 1; pointer-events: auto; }
+.wrap.resizing .sizeh { transform: scale(1.08); }
+.sizechip { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 8; padding: 3px 8px; border-radius: var(--r-pill); background: rgba(16,20,19,.86); font: 500 var(--t-11) var(--font-mono); color: var(--fg-1); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity var(--d-fast) var(--ease-out); }
+.wrap.resizing .sizechip { opacity: 1; }
+.wrap.resizing .bub-tag, .wrap.resizing .bub-grip { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sizeh, .sizechip { transition: none; } }

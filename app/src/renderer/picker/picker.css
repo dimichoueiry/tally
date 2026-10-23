@@ -1,0 +1,16 @@
+/* Window picker (SETUP_V2 §3.5, mockups 06 / 06b). Never captured (content protection). */
+#root[hidden], .ring[hidden], .wchip[hidden] { display: none; }
+#root { position: absolute; inset: 0; cursor: default; }
+/* Everything dims 38% except the window under the pointer: the ring's spread shadow is the dim. */
+.dim { position: absolute; inset: 0; background: rgba(5, 7, 6, 0.38); }
+.dim.cut { background: transparent; }
+.ring { position: absolute; border-radius: 10px; box-shadow: 0 0 0 3px var(--ready); pointer-events: none; }
+.ring.cut { box-shadow: 0 0 0 3px var(--ready), 0 0 0 9999px rgba(5, 7, 6, 0.38); }
+.wchip { position: absolute; display: inline-flex; align-items: center; gap: 10px; height: 34px; padding: 0 6px 0 12px; border-radius: 9px; font-size: var(--t-13); font-weight: 500; white-space: nowrap; max-width: calc(100% - 24px); pointer-events: none; }
+.wchip .t { overflow: hidden; text-overflow: ellipsis; }
+.wchip small { font: 500 var(--t-11) var(--font-mono); color: var(--fg-2); }
+.wchip .k { font: 500 var(--t-11) var(--font-mono); padding: 4px 6px; border-radius: 5px; background: rgba(255,255,255,.12); color: var(--fg-2); }
+/* Picked: a green chip with ✓, outside the window's top edge (06b) */
+.wchip.picked { background: var(--ready); color: var(--fg-on-ready); box-shadow: 0 2px 10px rgba(0,0,0,.35); padding: 0 12px 0 10px; }
+.wchip.picked small { color: rgba(7,18,10,.62); }
+.wchip.picked svg.i { width: 15px; height: 15px; stroke-width: 2.4; }

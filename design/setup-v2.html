@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tally — setup v2</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="setup-v2.css">
+</head>
+<body>
+<!--
+  Setup v2: in-context setup. Static mockups. Repeated chrome (toolbar, tray, bubble, recording bar)
+  is expanded from data-c attributes by the script at the bottom, so every state uses identical markup.
+  Scenes are TRUE SCALE (1280×800 pt, the smallest supported display). Spec: SETUP_V2.md.
+-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="monitor" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8 20h8M12 16.5V20"/></symbol>
+  <symbol id="window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M6.5 6.5h.01M9 6.5h.01"/></symbol>
+  <symbol id="area" viewBox="0 0 24 24"><path d="M4 8.5V6a2 2 0 012-2h2.5M15.5 4H18a2 2 0 012 2v2.5M20 15.5V18a2 2 0 01-2 2h-2.5M8.5 20H6a2 2 0 01-2-2v-2.5"/><path d="M10 12h4M12 10v4"/></symbol>
+  <symbol id="camonly" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10.5" r="2.6"/><path d="M7.5 20c.8-2.9 2.4-4.2 4.5-4.2s3.7 1.3 4.5 4.2"/></symbol>
+  <symbol id="camera" viewBox="0 0 24 24"><rect x="2.5" y="6" width="13.5" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></symbol>
+  <symbol id="speaker" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/></symbol>
+  <symbol id="speaker0" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 010 6"/></symbol>
+  <symbol id="camera-off" viewBox="0 0 24 24"><path d="M10 6h3.5A2.5 2.5 0 0116 8.5v2l5-3v9l-1.6-1M16 16.2V15.5A2.5 2.5 0 0113.5 18H5a2.5 2.5 0 01-2.5-2.5v-7A2.5 2.5 0 015 6"/><path d="M3 3l18 18"/></symbol>
+  <symbol id="speaker-off" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><path d="M5.5 12h.01M12 12h.01M18.5 12h.01" stroke-width="2.8"/></symbol>
+  <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="power" viewBox="0 0 24 24"><path d="M12 3.5v7.5"/><path d="M6.6 7a7.5 7.5 0 1010.8 0"/></symbol>
+  <symbol id="sh-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/></symbol>
+  <symbol id="sh-squircle" viewBox="0 0 24 24"><path d="M12 4.5c6 0 7.5 1.5 7.5 7.5s-1.5 7.5-7.5 7.5-7.5-1.5-7.5-7.5S6 4.5 12 4.5z"/></symbol>
+  <symbol id="sh-land" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5"/></symbol>
+  <symbol id="sh-port" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="11" height="17" rx="2.5"/></symbol>
+  <symbol id="bg-none" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M6.5 19.5a5.5 5.5 0 0111 0"/></symbol>
+  <symbol id="bg-blur" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M6.5 19.5a5.5 5.5 0 0111 0"/><path d="M3 5h.01M3 9.5h.01M3 14h.01M21 5h.01M21 9.5h.01M21 14h.01M6 2.8h.01M18 2.8h.01" stroke-width="2.4"/></symbol>
+  <symbol id="bg-image" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3.5 16.5l5-5 4 4 2.5-2.5 5.5 5.5"/><circle cx="16" cy="9" r="1.4"/></symbol>
+  <symbol id="zoom" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6M8 10.5h5M10.5 8v5"/></symbol>
+  <symbol id="resize" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+  <symbol id="chev-d" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+  <symbol id="chev-l" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></symbol>
+  <symbol id="chev-r" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol>
+  <symbol id="notes" viewBox="0 0 24 24"><rect x="4.5" y="3.5" width="15" height="17" rx="3"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></symbol>
+  <symbol id="autoscroll" viewBox="0 0 24 24"><path d="M4 6h9M4 10.5h9M4 15h6"/><path d="M18 5v13M14.8 15l3.2 3.2 3.2-3.2"/></symbol>
+  <symbol id="paste" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2.5"/><path d="M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 11h6M9 15h4"/></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="pause"  viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.5 8.5 0 00-5.8 2.4L4 8.5"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 002 1.8h7a2 2 0 002-1.8l1-12M9 7V4.5h6V7"/></symbol>
+  <symbol id="library" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M10 9.5v5l4-2.5z"/></symbol>
+  <symbol id="hd" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15V9m0 3h3m0-3v6M14 9h1.5a3 3 0 010 6H14z"/></symbol>
+  <symbol id="quit" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 4L2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2h.01"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  <symbol id="cover" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 21h10M7.5 14.5l7-7M14 8.5l2.5-2.5"/></symbol>
+
+  <!-- Camera image stand-ins -->
+  <symbol id="face-bg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#3a4b55"/><rect x="-5" y="8" width="38" height="56" fill="#c9d6dc" opacity=".55"/>
+    <rect x="66" y="0" width="40" height="100" fill="#2b3740"/>
+    <rect x="70" y="16" width="8" height="22" fill="#b7754b"/><rect x="80" y="20" width="6" height="18" fill="#6b8e6b"/><rect x="88" y="14" width="9" height="24" fill="#c9b27c"/>
+    <rect x="70" y="46" width="27" height="3" fill="#1e272d"/><circle cx="20" cy="80" r="14" fill="#5d7f4f" opacity=".8"/>
+  </symbol>
+  <symbol id="bg-img" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#3f6f8f"/><rect width="100" height="45" fill="#9cc3d6"/>
+    <path d="M-5 70 L25 38 L48 62 L70 34 L105 72 V105 H-5z" fill="#4c6b5a"/><path d="M-5 82 Q40 66 105 84 V105 H-5z" fill="#2f4a3d"/>
+  </symbol>
+  <symbol id="bg-img2" viewBox="0 0 100 100"><rect width="100" height="100" fill="#22303a"/><rect x="8" y="10" width="40" height="80" fill="#2f4250"/><rect x="56" y="22" width="36" height="20" fill="#9af07f" opacity=".35"/><rect x="56" y="48" width="36" height="42" fill="#34495a"/></symbol>
+  <symbol id="bg-img3" viewBox="0 0 100 100"><rect width="100" height="100" fill="#d9e1dd"/><circle cx="72" cy="30" r="22" fill="#b9c8c0"/><rect y="66" width="100" height="34" fill="#c3cec8"/></symbol>
+  <symbol id="face-person" viewBox="0 0 100 100">
+    <path d="M14 104c2-20 16-30 36-30s34 10 36 30z" fill="#2c3e57"/><path d="M42 70h16v9a8 8 0 01-16 0z" fill="#c99579"/>
+    <ellipse cx="50" cy="50" rx="15" ry="18.5" fill="#d9a587"/>
+    <path d="M34.5 47c-1-12 6.5-19 15.5-19s17 6 15.5 19c-2-6-6.5-9-15.5-9.5S36.5 41 34.5 47z" fill="#2d2118"/>
+  </symbol>
+  <filter id="soft"><feGaussianBlur stdDeviation="3.2"/></filter>
+  <symbol id="ptr" viewBox="0 0 16 22"><path d="M1 1v17.5l4.4-4.2 3 6.4 2.6-1.2-3-6.3H14z" fill="#0b0e0d" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+</svg>
+
+<main class="doc">
+  <header class="doc-head">
+    <div>
+      <h1><span class="mark lg" aria-hidden="true"></span>Setup v2</h1>
+      <p>In-context setup: a floating toolbar and a live camera bubble on the real screen, with the desktop cover already applied, so what you see is what records. Replaces the launcher popover. Scenes are drawn at true size (1280×800 pt). Spec: <code class="mono">SETUP_V2.md</code>.</p>
+    </div>
+    <nav class="doc-nav" aria-label="Screens">
+      <a href="#v1">1 Setup</a><a href="#v2">2 Toolbar</a><a href="#v3">3 Bubble tray</a><a href="#v4">4 Cover</a><a href="#v5">5 More</a>
+      <a href="#v6">6 Window</a><a href="#v7">7 Area</a><a href="#v8">8 Camera only</a><a href="#v9">9 Record → bar</a><a href="#v10">10 Countdown</a><a href="#v11">11 Focus</a><a href="#v12">12 Displays</a><a href="#v13">13 Windows</a><a href="#v14">14 Camera size</a><a href="#v15">15 Speaker notes</a><a href="#v16">16 Compact toolbar</a>
+    </nav>
+  </header>
+
+  <!-- 1 ─ Setup, full screen -->
+  <section class="sec" id="v1">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Setup on the real screen</h2>
+      <p>Click the menu-bar icon (or ⌥⇧R with nothing open records straight away, as today). The toolbar appears bottom-centre of that display, the bubble appears with its tray attached, and the chosen cover is applied immediately. Nothing else opens.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="01-setup-display">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:24px"></div>
+          <div data-c="tb" data-o='{"mode":"display"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>01 · Idle, Full screen.</b> Cover “Glow” applied live (icons, widgets and wallpaper gone; windows stay). Bubble circle S, bottom-left, tray attached. Toolbar 16 pt above the Dock. Only Record is filled.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 2 ─ Toolbar states -->
+  <section class="sec" id="v2">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Setup toolbar</h2>
+      <p>× · source group (Full screen / Window / Area / Camera only) · camera · system audio · cover · more · Record. The active source shows its label, so icons are never the only cue. No microphone control exists. Record keeps its label and width in every mode, so nothing jumps under the pointer.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="02-toolbar-modes" style="width:900px">
+          <div><div class="state-lbl">Full screen (default)</div><div class="cell2"><div data-c="tb" data-o='{"mode":"display"}'></div></div></div>
+          <div><div class="state-lbl">Window · after choosing a window</div><div class="cell2"><div data-c="tb" data-o='{"mode":"window","label":"Acme Dashboard"}'></div></div></div>
+          <div><div class="state-lbl">Area · after dragging an area</div><div class="cell2"><div data-c="tb" data-o='{"mode":"area","label":"768 × 432"}'></div></div></div>
+          <div><div class="state-lbl">Camera only · cover not used, so its button is disabled</div><div class="cell2"><div data-c="tb" data-o='{"mode":"camera"}'></div></div></div>
+          <div><div class="state-lbl">Camera off · system audio on</div><div class="cell2"><div data-c="tb" data-o='{"mode":"display","cam":false,"audio":true}'></div></div></div>
+        </div>
+        <figcaption><b>02 · Source modes and toggles.</b> Off toggles are struck through, not just dimmed. Window and Area show what was picked, so the toolbar names the target before Record.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 light-bg" data-shot="02b-toolbar-tooltips-light" style="width:900px;padding-top:70px">
+          <div class="cell2"><div data-c="tb" data-o='{"mode":"display","hover":"rec","tip":["rec","Record","⌥⇧R"]}'></div></div>
+          <div class="cell2" style="margin-top:46px"><div data-c="tb" data-o='{"mode":"display","hover":"audio","tip":["audio","System audio · off",""]}'></div></div>
+          <div class="cell2" style="margin-top:46px"><div data-c="tb" data-o='{"mode":"display","hover":"close","tip":["close","Close setup","Esc"]}'></div></div>
+          <div class="cell2" style="margin-top:46px">
+            <div class="tb-note glass" style="position:relative;display:inline-flex;margin-bottom:10px"><svg class="i"><use href="#warn"/></svg>Screen Recording is off for Tally <small>macOS needs it to record your screen</small><button class="btn">Open Settings</button></div>
+            <div data-c="tb" data-o='{"mode":"display","recDisabled":true}'></div>
+          </div>
+        </div>
+        <figcaption><b>02b · Over a white page.</b> Tooltips carry the shortcut. Bottom: Record disabled with the reason pinned above the toolbar (replaces the popover banner; same rule for &lt; 1 GB free).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 3 ─ Bubble + tray -->
+  <section class="sec" id="v3">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Bubble and its tray</h2>
+      <p>The tray hangs 8 pt under the bubble while setting up and is gone while recording (the v1 hover HUD takes over). Row 1: zoom with detents at 1.0 / 1.25 / 1.5 / 1.75 / 2.0×. Row 2: camera settings · shape · camera off. Row 3: background. Size: drag the corner handle (snaps S/M/L/XL) or pick it in camera settings. Drawn at true size.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="03-bubble-shapes" style="width:1340px">
+          <div class="srow" style="align-items:flex-end;gap:36px">
+            <div><div class="state-lbl">Circle · S 220</div><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' class="cell2"></div></div>
+            <div><div class="state-lbl">Squircle · S 220</div><div data-c="bubble" data-o='{"shape":"squircle","s":220,"tray":true}' class="cell2"></div></div>
+            <div><div class="state-lbl">Landscape 16:9 · S 330×186</div><div data-c="bubble" data-o='{"shape":"land","s":220,"tray":true}' class="cell2"></div></div>
+            <div><div class="state-lbl">Portrait 3:4 · S 248×330</div><div data-c="bubble" data-o='{"shape":"port","s":220,"tray":true}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>03 · Four shapes.</b> The tray is never narrower than 264 pt, so the controls don't change size with the bubble.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="03b-bubble-states" style="width:1340px">
+          <div class="srow" style="align-items:flex-end;gap:36px">
+            <div><div class="state-lbl">Background · Blur, zoom 1.5×</div><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"bg":"blur","zoom":1.5}' class="cell2"></div></div>
+            <div><div class="state-lbl">Background · Image (picker open)</div><div class="cell2"><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"bg":"image","imgpop":true}'></div></div></div>
+            <div><div class="state-lbl">720p camera · zoom capped at 1.3×</div><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"zoom":1.3,"cap":1.3}' class="cell2"></div></div>
+            <div><div class="state-lbl">Resizing · corner handle</div><div data-c="bubble" data-o='{"shape":"circle","s":280,"resize":true}' class="cell2"></div></div>
+          </div>
+          <div class="srow" style="align-items:flex-end;gap:36px;margin-top:56px">
+            <div><div class="state-lbl">Camera settings (from the sliders button)</div>
+              <div class="cell2">
+                <div class="gpop glass no-arrow" style="position:relative;width:288px">
+                  <h4>Camera</h4>
+                  <div class="gsel"><span>FaceTime HD Camera</span><svg class="i s14"><use href="#chev-d"/></svg></div>
+                  <div class="mrow" style="padding:0"><span class="l">Size</span><span class="gseg"><button aria-checked="true">S</button><button>M</button><button>L</button><button>XL</button></span></div>
+                  <p class="h">Zoom follows your face. Preview is mirrored; the video is not.</p>
+                </div>
+              </div></div>
+            <div><div class="state-lbl">Camera off (setup)</div><div class="cell2"><div class="camoff glass"><svg class="i"><use href="#camera"/></svg><span>Camera off</span><button class="btn">Turn on</button></div></div>
+              <div class="legend" style="margin-top:12px;max-width:300px">The bubble collapses to this pill at its corner. Recording is screen only; the toolbar camera icon is struck through.</div></div>
+            <div><div class="state-lbl">Camera blocked by macOS</div><div class="cell2"><div class="camoff glass"><svg class="i" style="color:var(--hold)"><use href="#warn"/></svg><span>Camera blocked</span><button class="btn">Open Settings</button></div></div></div>
+          </div>
+        </div>
+        <figcaption><b>03b · Tray states.</b> Amber tick on the zoom track marks the quality cap (crop keeps ≥ 540 px). Image picks from bundled images or “Choose…”.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 4 ─ Cover picker -->
+  <section class="sec" id="v4">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Desktop cover picker</h2>
+      <p>The swatch button shows the current cover. Clicking a swatch applies it to the real desktop at once (it is the real cover helper, not a preview). “Show desktop” turns the cover off.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-night" data-shot="04-cover-picker">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:24px"></div>
+          <div data-c="tb" data-o='{"mode":"display","cover":"cv-night","focus":"cover","id":"tb4"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+          <div class="gpop glass" data-anchor="tb4:cover" style="width:304px">
+            <h4>Desktop cover <small>hides icons and wallpaper</small></h4>
+            <div class="swg">
+              <div class="swc"><span class="s cv-none" style="background:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)"><svg class="i s20"><use href="#monitor"/></svg></span>Off</div>
+              <div class="swc"><span class="s cv-glow"></span>Glow</div>
+              <div class="swc" aria-checked="true"><span class="s cv-night"></span>Night</div>
+              <div class="swc"><span class="s cv-fog"></span>Fog</div>
+              <div class="swc"><span class="s cv-graph"></span>Graphite</div>
+              <div class="swc"><span class="s cv-black"></span>Black</div>
+              <div class="swc"><span class="s cv-wall" style="filter:blur(.6px)"></span>Wallpaper</div>
+              <div class="swc"><span class="s add"><svg class="i"><use href="#plus"/></svg></span>Image…</div>
+            </div>
+            <p class="h">Windows, the menu bar and the Dock still record. Applies now.</p>
+          </div>
+        </div>
+        <figcaption><b>04 · Cover “Night” chosen.</b> The whole desktop behind the windows changes as you click. Esc or a click elsewhere closes the picker; the choice is kept.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5 ─ More menu -->
+  <section class="sec" id="v5">
+    <div class="sec-head"><span class="sec-num">05</span><h2>More menu</h2>
+      <p>Everything that is set once and rarely touched. System audio is here with its label as well as on the toolbar, because a speaker icon alone is ambiguous.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="05-more-menu">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:24px"></div>
+          <div data-c="tb" data-o='{"mode":"display","focus":"more","id":"tb5"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+          <div class="gpop glass" data-anchor="tb5:more" style="width:300px;gap:2px;padding:8px">
+            <div class="mrow"><svg class="i"><use href="#speaker-off"/></svg><span class="l">System audio<small>Sound from apps. Off by default.</small></span><span class="switch" role="switch" aria-checked="false"></span></div>
+            <div class="msep"></div>
+            <div class="mrow"><svg class="i"><use href="#hd"/></svg><span class="l">Size</span><span class="gseg"><button aria-checked="true">1080p</button><button>Native</button></span></div>
+            <div class="mrow"><span style="width:16px"></span><span class="l">Frames</span><span class="gseg"><button aria-checked="true">30</button><button>60</button></span></div>
+            <div class="cost" style="padding-left:34px;margin:-2px 0 4px">≈ 1.1 GB/hour · display 3024×1964</div>
+            <div class="msep"></div>
+            <div class="mrow is-hover"><svg class="i"><use href="#library"/></svg><span class="l">Recordings</span><span class="k">⌘L</span></div>
+            <div class="mrow"><svg class="i"><use href="#sliders"/></svg><span class="l">Settings…</span><span class="k">⌘,</span></div>
+            <div class="mrow"><svg class="i"><use href="#quit"/></svg><span class="l">Quit Tally</span><span class="k">⌘Q</span></div>
+          </div>
+        </div>
+        <figcaption><b>05 · More (…).</b> System audio · Quality (size, frames, cost line) · Recordings · Settings · Quit. The popover’s Recordings and Settings header buttons move here.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 6 ─ Window picker -->
+  <section class="sec" id="v6">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Window picker</h2>
+      <p>Choose Window and the screen becomes the picker: hover lights a window in green, click picks it. Tab / ⇧Tab step through windows front to back, Return picks. The bubble jumps inside the picked window (D4). The cover button is disabled: only the window records.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene wall" data-shot="06-window-hover">
+          <div data-c="menubar" data-o='{"tray":"on","app":"Chrome"}'></div>
+          <div class="desk-icons" style="z-index:1"><i></i><i></i><i></i></div>
+          <div class="app dark" style="left:560px;top:150px;width:640px;height:440px"><div class="tb"><b></b><b></b><b></b></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="lines"><i></i><i style="width:80%"></i><i style="width:60%"></i><i></i></div></div></div></div>
+          <div class="app" style="left:110px;top:70px;width:720px;height:460px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="pick-ring" style="left:110px;top:70px;width:720px;height:460px"></div>
+          <div class="pick-chip glass" style="left:126px;top:84px"><span class="ai" style="background:linear-gradient(135deg,#4aa3ff,#1d6fe0)"></span>Acme Dashboard — Chrome <small>1440×920</small><span class="kbd">Click</span></div>
+          <div class="dock" style="z-index:5"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:24px"></div>
+          <div data-c="tb" data-o='{"mode":"window","label":"Choose a window"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+          <svg class="cursor" style="left:470px;top:330px"><use href="#ptr"/></svg>
+        </div>
+        <figcaption><b>06 · Hovering.</b> Everything except the hovered window is dimmed 38%; the chip names app, title and size. Tally’s own windows and minimised windows can’t be picked.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene wall" data-shot="06b-window-picked">
+          <div data-c="menubar" data-o='{"tray":"on","app":"Chrome"}'></div>
+          <div class="desk-icons" style="z-index:1"><i></i><i></i><i></i></div>
+          <div class="app dark" style="left:560px;top:150px;width:640px;height:440px"><div class="tb"><b></b><b></b><b></b></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="lines"><i></i><i style="width:80%"></i><i style="width:60%"></i><i></i></div></div></div></div>
+          <div class="app" style="left:110px;top:70px;width:720px;height:460px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="pick-ring" style="left:110px;top:70px;width:720px;height:460px"></div>
+          <div class="pick-chip ok" style="left:110px;top:38px"><svg class="i s14"><use href="#check"/></svg>Acme Dashboard — Chrome <small>1440×920</small></div>
+          <div class="dock" style="z-index:5"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:134px;top:286px"></div>
+          <div data-c="tb" data-o='{"mode":"window","label":"Acme Dashboard"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>06b · Picked.</b> Ring stays; the label sits outside the window so it is never in the frame. The bubble is inside the window at the 24 pt inset; the tray may hang outside the window: it is never captured. Click another window to switch.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 7 ─ Area picker -->
+  <section class="sec" id="v7">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Area picker</h2>
+      <p>Choose Area, drag a rectangle. Handles resize, dragging inside moves it, arrows nudge 1 pt (⇧ 10 pt). The bar above the area shows the output size and aspect presets. The area is remembered per display.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="07-area-drag">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:180px;top:64px;width:920px;height:540px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="scrim"></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="center-hint glass" style="top:40%"><svg class="i s20"><use href="#area"/></svg>Drag to choose an area <small>Return = whole display · Esc = back to Full screen</small></div>
+          <div class="xhair" style="left:300px;top:200px"></div>
+          <div data-c="tb" data-o='{"mode":"area","label":"Drag an area"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>07 · Before dragging.</b> Crosshair cursor, the screen dims. The bubble hides until an area exists, so it never gets in the way of the drag.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="07b-area-set">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:180px;top:64px;width:920px;height:540px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="area" style="left:256px;top:96px;width:768px;height:432px">
+            <i class="h" style="left:0;top:0"></i><i class="h" style="left:50%;top:0"></i><i class="h" style="left:100%;top:0"></i>
+            <i class="h" style="left:0;top:50%"></i><i class="h" style="left:100%;top:50%"></i>
+            <i class="h" style="left:0;top:100%"></i><i class="h" style="left:50%;top:100%"></i><i class="h" style="left:100%;top:100%"></i>
+          </div>
+          <div class="area-bar glass" style="right:256px;top:44px"><span class="dims">768 × 432 pt</span><span class="dims" style="color:var(--fg-2)">→ 1536×864</span><span class="gseg"><button>Free</button><button aria-checked="true">16:9</button><button>4:3</button><button>1:1</button></span></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:280px;top:284px"></div>
+          <div data-c="tb" data-o='{"mode":"area","label":"768 × 432"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>07b · Area set, 16:9 locked.</b> Green edge = preview; it turns red at Record. The bubble is constrained inside the area, like Window mode. The cover still applies (the area can include desktop).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 8 ─ Camera only -->
+  <section class="sec" id="v8">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Camera only</h2>
+      <p>No screen is recorded. The bubble grows into a centred 16:9 stage that matches the output frame, the desktop dims (it is not in the video), and the tray drops the shape control (the output is always 16:9).</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="08-camera-only">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="scrim" style="background:rgba(5,7,6,.62)"></div>
+          <div data-c="bubble" data-o='{"shape":"stage","w":800,"h":450,"tray":true,"noshape":true}' style="left:240px;top:60px"></div>
+          <div data-c="tb" data-o='{"mode":"camera"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>08 · Camera only.</b> Records the camera at 1080p, 16:9, with zoom and background applied. Cover and the bubble’s screen position don’t apply.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 9 ─ Toolbar → recording bar -->
+  <section class="sec" id="v9">
+    <div class="sec-head"><span class="sec-num">09</span><h2>From toolbar to control bar</h2>
+      <p>One window, one pill. On Record the setup controls fold away (180 ms), the pill re-centres and becomes the countdown bar, then the v1 control bar at frame 1. Same 56 pt height throughout, so it reads as the same object.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="09-toolbar-to-bar" style="width:900px">
+          <div><div class="state-lbl">1 · Setup — pointer on Record</div><div class="cell2"><div data-c="tb" data-o='{"mode":"display","hover":"rec"}'></div><svg class="cursor" style="left:600px;top:30px"><use href="#ptr"/></svg></div></div>
+          <div><div class="state-lbl">2 · Countdown (3 s) — Stop is not under the pointer; clicks on Stop are ignored for 600 ms</div><div class="cell2"><div data-c="rb" data-o='{"state":"armed"}'></div></div></div>
+          <div><div class="state-lbl">3 · Recording — v1 bar, same controls and shortcuts</div><div class="cell2"><div data-c="rb" data-o='{"state":"rec","hover":"pause","tip":["pause","Pause","⌥⇧P"]}' style="margin-top:44px"></div></div></div>
+          <div><div class="state-lbl">4 · Paused</div><div class="cell2"><div data-c="rb" data-o='{"state":"paused"}'></div></div></div>
+          <div><div class="state-lbl">5 · Stop — the pill fades; post-stop popup appears (v1 §3.5). Next setup reopens with the same choices.</div></div>
+        </div>
+        <figcaption><b>09 · Morph sequence.</b> Tooltips keep the shortcuts: Stop ⌥⇧R, Pause ⌥⇧P, Restart ⌥⇧Z, Cancel ⌥⇧X, Camera ⌥⇧C.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 10 ─ Countdown + recording scenes -->
+  <section class="sec" id="v10">
+    <div class="sec-head"><span class="sec-num">10</span><h2>Countdown and recording</h2>
+      <p>Green becomes red: the selection edge, the countdown ring and the tag switch to the live colour. The tray disappears; the bubble does not move (it stays where it was in setup; drag it lower during recording if wanted).</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="10-countdown">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220}' style="left:24px;top:420px"></div>
+          <div class="cap-full"></div>
+          <div class="cap-tag" style="left:16px;top:40px"><span class="dot" style="background:#fff;width:7px;height:7px"></span>Built-in display · 1080p</div>
+          <div class="count2"><div class="num glass"><svg viewBox="0 0 176 176"><circle class="t" cx="88" cy="88" r="84"/><circle class="r" cx="88" cy="88" r="84" stroke-dasharray="528" stroke-dashoffset="176"/></svg>3</div>
+            <div class="hints glass"><span><span class="kbd">Space</span>start now</span><span><span class="kbd">Esc</span>cancel</span></div></div>
+          <div data-c="rb" data-o='{"state":"armed"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>10 · Countdown.</b> 4 pt red frame + tag name the target. Esc returns to setup (not to nothing), with every choice intact.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="10b-recording">
+          <div data-c="menubar" data-o='{"tray":"live"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220}' style="left:24px;top:420px"></div>
+          <div data-c="rb" data-o='{"state":"rec"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div>
+        <figcaption><b>10b · Recording.</b> Excluded from capture: the bar, menu-bar timer. Captured: the cover (by design) and the bubble (composited by the engine; the on-screen bubble itself is excluded).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 11 ─ Focus -->
+  <section class="sec" id="v11">
+    <div class="sec-head"><span class="sec-num">11</span><h2>Keyboard focus</h2>
+      <p>Setup takes keyboard focus when it opens (it is a deliberate mode, not a recording). Initial focus: Record, so Return records. Tab order: toolbar left→right, then the tray, then the bubble. ←/→ move inside the source group and the tray’s segments (roving tabindex: one tab stop per group). Esc closes the open popover, else closes setup.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="11-focus" style="width:1060px">
+          <div><div class="state-lbl">Tab order · initial focus on Record (7)</div><div class="cell2"><div data-c="tb" data-o='{"mode":"display","focus":"rec","order":true}' style="margin-top:30px"></div></div></div>
+          <div><div class="state-lbl">Focus on the source group · ← → change source, selection follows focus</div><div class="cell2"><div data-c="tb" data-o='{"mode":"display","focus":"src-window"}'></div></div></div>
+          <div class="srow" style="align-items:flex-start;gap:48px">
+            <div><div class="state-lbl">Tray · 8 zoom (← → 0.1×, 0 resets) · 9 settings · 10 shape · 11 camera off · 12 background · 13 bubble</div><div class="cell2"><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"focus":"zoom","order":true}'></div></div></div>
+            <div><div class="state-lbl">Shape segment focused</div><div class="cell2"><div data-c="bubble" data-o='{"shape":"squircle","s":220,"tray":true,"focus":"shape"}'></div></div></div>
+            <div><div class="state-lbl">Bubble focused · arrows move 8 pt</div><div class="cell2"><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"focus":"bubble"}'></div></div></div>
+          </div>
+        </div>
+        <figcaption><b>11 · Focus ring:</b> 2 pt green with a 2 pt dark gap, which reads on any glass tint. Record’s ring is white because it is green. Every target ≥ 28 pt: toolbar 40, Record 44, tray 32, swatches 56×38, zoom track 28 tall.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 12 ─ Multi-display -->
+  <section class="sec" id="v12">
+    <div class="sec-head"><span class="sec-num">12</span><h2>Two displays</h2>
+      <p>Setup opens on the display whose menu-bar icon was clicked. Other displays show a glass “Record this display” target in Full screen mode; clicking it moves the toolbar and bubble there. In Window mode windows on every display are pickable. The cover applies to the recorded display only.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2" data-shot="12-multi-display" style="width:1340px;padding:28px">
+          <div class="srow" style="gap:20px;align-items:flex-end">
+            <div style="width:640px;height:400px;position:relative"><div style="transform:scale(.5);transform-origin:0 0;position:absolute">
+              <div class="scene cv-glow">
+                <div data-c="menubar" data-o='{"tray":"on"}'></div>
+                <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+                <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+                <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:24px"></div>
+                <div data-c="tb" data-o='{"mode":"display"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+              </div></div></div>
+            <div style="width:640px;height:400px;position:relative"><div style="transform:scale(.5);transform-origin:0 0;position:absolute">
+              <div class="scene wall">
+                <div data-c="menubar" data-o='{"tray":"off"}'></div>
+                <div class="desk-icons"><i></i><i></i><i></i></div>
+                <div class="app dark" style="left:140px;top:110px;width:900px;height:560px"><div class="tb"><b></b><b></b><b></b></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="lines"><i></i><i style="width:80%"></i><i style="width:60%"></i><i></i></div></div></div></div>
+                <div class="scrim" style="background:rgba(5,7,6,.3)"></div>
+                <div class="disp-target glass" style="transform:translate(-50%,-50%) scale(1.6)"><svg class="i s24"><use href="#monitor"/></svg><b>Record this display</b><small>LG UltraFine · 3840×2160</small><button class="btn">Move here</button></div>
+              </div></div></div>
+          </div>
+          <div class="srow" style="gap:20px"><div class="dim-lbl" style="width:640px">Built-in (setup is here) · cover applied · drawn at 50%</div><div class="dim-lbl" style="width:640px">External · untouched desktop, light scrim, target button · drawn at 50%</div></div>
+        </div>
+        <figcaption><b>12 · Multi-display.</b> ⌥⇧R with setup closed still records the display under the pointer (D6). Area and bubble positions are remembered per display.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 13 ─ Windows -->
+  <section class="sec" id="v13">
+    <div class="sec-head"><span class="sec-num">13</span><h2>Windows</h2>
+      <p>Same toolbar and tray. The toolbar sits 16 pt above the taskbar; shortcuts are spelled out; tray icon left-click opens setup.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="13-windows">
+          <div class="app" style="left:420px;top:40px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="taskbar" style="z-index:20"><i></i><i></i><i></i><i></i><i></i><span class="tb-right"><span class="tray on"><span class="traymark"></span></span><span>14:32<br>21/10/2026</span></span></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true}' style="left:24px;bottom:68px"></div>
+          <div data-c="tb" data-o='{"mode":"display","win":true,"hover":"rec","tip":["rec","Record","Alt+Shift+R"]}' style="left:50%;transform:translateX(-50%);bottom:60px"></div>
+        </div>
+        <figcaption><b>13 · Windows 11.</b> Acrylic is not available to Electron windows reliably, so the glass falls back to 92% opaque with no blur when backdrop blur is off (see SETUP_V2 Windows notes).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 14 ─ Camera size in the tray -->
+  <section class="sec" id="v14">
+    <div class="sec-head"><span class="sec-num">14</span><h2>Camera size in the tray</h2>
+      <p>Size and zoom are two separate controls. <b>Size</b> is how big the bubble is on screen and in the video (S 220 · M 280 · L 340 · XL 400 pt). <b>Zoom</b> is how tightly the camera is cropped inside it. The tray is two rows, like Loom's: row 1 is <i>how big</i> (size presets · zoom), row 2 is <i>how it looks</i> (shape · background · settings · off). Supersedes the 3-row tray in §03.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="14-tray-size" style="width:1340px">
+          <div class="srow" style="align-items:flex-end;gap:44px">
+            <div><div class="state-lbl">S · 220 pt · zoom 1.0×</div><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"t2":true,"size":"S"}' class="cell2"></div></div>
+            <div><div class="state-lbl">M · 280 pt · zoom 1.25× · blur</div><div data-c="bubble" data-o='{"shape":"circle","s":280,"tray":true,"t2":true,"size":"M","zoom":1.25,"bg":"blur"}' class="cell2"></div></div>
+            <div><div class="state-lbl">L · 340 pt · zoom 1.5×</div><div data-c="bubble" data-o='{"shape":"circle","s":340,"tray":true,"t2":true,"size":"L","zoom":1.5}' class="cell2"></div></div>
+          </div>
+          <div class="srow" style="align-items:flex-end;gap:44px;margin-top:40px">
+            <div><div class="state-lbl">Landscape 16:9 · M · 420×236</div><div data-c="bubble" data-o='{"shape":"land","s":280,"tray":true,"t2":true,"size":"M"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Dragging the corner handle · snaps M → L, the preset follows</div><div data-c="bubble" data-o='{"shape":"circle","s":340,"tray":true,"t2":true,"size":"L","resize":true,"chip":"L · 340 pt"}' class="cell2"></div></div>
+            <div style="padding-bottom:44px"><div class="state-lbl">Keyboard · size group focused (←/→ to change)</div><div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"t2":true,"size":"S","focus":"size","tip":["size-S","Size S · 220 pt"]}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>14 · Tray, two rows.</b> 332 pt wide (or the bubble's width if wider). Letters for size, a magnifier for zoom, so the two never read as the same control. Background is icon-only here, with tooltips and labels for screen readers.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="14b-size-in-scene">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":400,"tray":true,"t2":true,"size":"XL","zoom":1.25,"align":"left"}' style="left:24px;bottom:24px"></div>
+          <div data-c="tb" data-o='{"mode":"display","notes":"off"}' style="left:440px;bottom:78px"></div>
+        </div>
+        <figcaption><b>14b · XL on a 1280×800 display.</b> The tray lines up with the bubble's outer edge, so the 24 pt inset holds for both. A bubble this big would sit under a centred toolbar, so the toolbar slides right to keep 16 pt clear of bubble + tray (on 1280 pt this happens even at S; see 15). It slides back when the bubble shrinks or moves.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 15 ─ Speaker notes -->
+  <section class="sec" id="v15">
+    <div class="sec-head"><span class="sec-num">15</span><h2>Speaker notes</h2>
+      <p>A script panel docked right under the camera lens, so the eyes stay near the lens while reading. Opened from the toolbar. Editable during setup; read-only and scrolling while recording; editable again while paused. Saved locally. Never in the recording.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="bezel" data-shot="15-notes-setup"><span class="lens" aria-hidden="true"></span><span class="lens-lbl">CAMERA</span>
+        <div class="scene cv-glow">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="notes" data-o='{"state":"edit","caret":true,"focus":"txt"}' style="left:360px;top:36px"></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"t2":true,"size":"S","align":"left"}' style="left:24px;top:462px"></div>
+          <div data-c="tb" data-o='{"mode":"display","notes":"on"}' style="left:372px;bottom:78px"></div>
+        </div></div>
+        <figcaption><b>15 · Setup, editing.</b> Pasted text is kept as plain text. Controls sit <i>below</i> the text so the line being read is the one nearest the lens. Text size · auto-scroll · speed in words per minute · saved state · hide.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="15b-notes-states" style="width:1240px">
+          <div class="srow" style="gap:40px;padding-top:44px">
+            <div><div class="state-lbl">Toolbar · Notes button (on while the panel is open)</div><div data-c="tb" data-o='{"mode":"display","notes":"on","hover":"notes","tip":["notes","Speaker notes",""]}' class="cell2"></div></div>
+          </div>
+          <div class="srow" style="gap:40px">
+            <div><div class="state-lbl">Empty · first open (focus in the text area)</div><div data-c="notes" data-o='{"state":"empty","focus":"txt"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Text size 32 · keyboard on “Larger text”</div><div data-c="notes" data-o='{"state":"edit","fs":32,"focus":"fs+","tip":["fs+","Larger text","⌘+"],"saved":"Saving…"}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>15b · Button, empty state, text size.</b> Text size runs 18–40 in steps of 2 (default 24). “Saved” appears 0.5 s after typing stops.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="bezel" data-shot="15c-notes-recording"><span class="lens" aria-hidden="true"></span><span class="lens-lbl">CAMERA</span>
+        <div class="scene cv-glow">
+          <div data-c="menubar" data-o='{"tray":"live"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="notes" data-o='{"state":"rec","done":1,"scroll":47,"prog":34}' style="left:360px;top:36px"></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220}' style="left:24px;top:462px"></div>
+          <div data-c="rb" data-o='{"state":"rec","notes":"on"}' style="left:50%;transform:translateX(-50%);bottom:78px"></div>
+        </div></div>
+        <figcaption><b>15c · Recording.</b> Read-only. Text drifts up past a fixed reading mark (line 2); what you've read dims. The footer shrinks to one quiet status line plus progress. Scroll with the wheel or trackpad at any time. The bar gains a Notes button to hide or show the panel.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="15d-notes-recording-states" style="width:1240px">
+          <div class="srow" style="gap:40px">
+            <div><div class="state-lbl">Recording · pointer over the panel</div><div data-c="notes" data-o='{"state":"rec-hover","done":1,"scroll":47,"hover":"auto"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Recording · scroll paused (⌥⇧N)</div><div data-c="notes" data-o='{"state":"scroll-paused","done":2,"scroll":162,"prog":46}' class="cell2"></div></div>
+          </div>
+          <div class="srow" style="gap:40px">
+            <div style="display:grid;gap:16px;justify-items:center"><div class="state-lbl" style="justify-self:start">Recording paused (⌥⇧P) · notes editable again</div><div data-c="notes" data-o='{"state":"rec-paused","done":1,"scroll":47,"caret":true,"focus":"txt"}' class="cell2"></div><div data-c="rb" data-o='{"state":"paused","notes":"on"}' class="cell2"></div></div>
+            <div style="display:grid;gap:16px;justify-items:center;align-content:end"><div class="state-lbl" style="justify-self:start">Windows · exclusion not verified on this PC</div>
+              <div class="tb-note glass" style="position:relative;display:inline-flex"><svg class="i"><use href="#warn"/></svg>Notes hidden while recording <small>this PC can't keep them out of the video</small><button class="btn">Why</button></div>
+              <div data-c="rb" data-o='{"state":"rec","notes":"blocked","win":true}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>15d · Recording states.</b> Hovering shows the full controls. ⌥⇧N pauses and resumes the scroll (amber = paused, as on the bar). Pausing the recording makes the notes editable. On Windows, if exclusion can't be proven, the notes hide at Record. They are never shown over a recording.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 16 ─ Compact toolbar -->
+  <section class="sec" id="v16">
+    <div class="sec-head"><span class="sec-num">16</span><h2>Compact toolbar</h2>
+      <p>Folded by default: grip · expand · what will record · Record. One click on the chevron unfolds the full toolbar to the right; the chevron and grip never move, so the same click folds it again. The recording bar folds the same way. Phase B sources only (Full screen, Window).</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="16-compact-setup">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"t2":true,"size":"S","align":"left"}' style="left:24px;top:462px"></div>
+          <div data-c="tbx" data-o='{"id":"c0"}' style="left:463px;bottom:78px"></div>
+        </div>
+        <figcaption><b>16 · Folded, the default.</b> 355 pt wide instead of 663 pt. It sits bottom-centre and clears the bubble + tray even at XL on a 1280 pt display, so the S15 slide is rarely needed while folded.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="16b-expand-storyboard" style="width:1100px;padding-top:56px;padding-bottom:64px">
+          <div class="stack">
+            <span class="band" data-band="#s1 .tgl"><span class="band-lbl" style="left:-4px">toggle + grip never move</span></span>
+            <div><div class="state-lbl">1 · Folded</div><div data-c="tbx" data-o='{"id":"s1"}' class="cell2"></div></div>
+            <div><div class="state-lbl">2 · Hover · close badge appears, tooltip on the chevron</div><div data-c="tbx" data-o='{"xbadge":true,"hover":"tgl","tip":["tgl","All controls","⌘\\"],"tipUp":true}' class="cell2"></div></div>
+            <div style="margin-top:34px"><div class="state-lbl">3 · Unfolding · 110 of 220 ms, controls fade + scale in left → right</div><div data-c="tbx" data-o='{"exp":true,"mid":true}' class="cell2"></div></div>
+            <div><div class="state-lbl">4 · Unfolded</div><div data-c="tbx" data-o='{"exp":true,"hover":"tgl","tip":["tgl","Fewer controls","⌘\\"],"tipUp":true}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>16b · Unfold and fold.</b> Width springs open in 220 ms (fold: 160 ms). The source chip becomes the source group in place; every other control fades and scales in, nearest first. Reduced motion: instant swap.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="16c-folded-details" style="width:1100px;padding-top:40px">
+          <div class="srow" style="gap:48px;align-items:flex-end">
+            <div><div class="state-lbl">Window picked · camera off · system audio on</div><div data-c="tbx" data-o='{"src":"window","label":"Acme Dashboard","cam":false,"audio":true,"hover":"st-cam","tip":["st-cam","Camera off · click to turn on",""],"tipUp":true}' class="cell2"></div></div>
+            <div style="position:relative"><div class="state-lbl" style="margin-bottom:118px">Source chip menu (no need to unfold)</div>
+              <div class="cell2" style="position:relative">
+                <div class="gpop glass" style="position:absolute;bottom:calc(100% + 12px);left:22px;--ax:86px;width:240px;gap:2px;padding:6px">
+                  <div class="mrow is-hover"><svg class="i"><use href="#monitor"/></svg><span class="l">Full screen</span><svg class="i s14" style="color:var(--ready)"><use href="#check"/></svg></div>
+                  <div class="mrow"><svg class="i"><use href="#window"/></svg><span class="l">Window…<small>Pick on screen</small></span></div>
+                </div>
+                <div data-c="tbx" data-o='{"focus":"chip"}'></div>
+              </div></div>
+          </div>
+          <div class="srow" style="gap:48px;align-items:flex-end;margin-top:8px">
+            <div><div class="state-lbl">Keyboard · focus on the chevron (Tab order: chevron → chip → status → Record)</div><div data-c="tbx" data-o='{"focus":"tgl","xbadge":true}' class="cell2"></div></div>
+            <div><div class="state-lbl">Keyboard · Return records (initial focus)</div><div data-c="tbx" data-o='{"focus":"rec"}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>16c · What stays visible when folded.</b> Record, the source, and <i>any setting that differs from its default</i> (camera off, system audio on) as a quiet icon you can click. Defaults stay hidden, so the folded pill never hides a surprise.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="sheet2 cover-bg" data-shot="16d-record-morph" style="width:1100px;padding-top:64px">
+          <div class="stack">
+            <span class="band" data-band="#m1 .rec2"><span class="band-lbl" style="left:0">Record was here · Stop never is</span></span>
+            <div><div class="state-lbl">Setup · folded</div><div data-c="tbx" data-o='{"id":"m1"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Countdown · 3 s</div><div data-c="rbx" data-o='{"state":"armed"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Recording · folded</div><div data-c="rbx" data-o='{"time":"00:01","tip":["stop","Stop","⌥⇧R"],"tipUp":true}' class="cell2"></div></div>
+            <div style="margin-top:34px"><div class="state-lbl">Paused · folded</div><div data-c="rbx" data-o='{"state":"paused"}' class="cell2"></div></div>
+            <div><div class="state-lbl">Recording · unfolded</div><div data-c="rbx" data-o='{"exp":true,"notes":"on"}' class="cell2"></div></div>
+          </div>
+        </div>
+        <figcaption><b>16d · Into the recording bar.</b> Same window, same left edge (no re-centring, so nothing slides under the pointer). Folded: time · Stop · Pause. Unfolded adds restart, discard, notes, camera. Stop lands left of where Record was; the countdown puts only text there (cancel is the × on the left), and whatever lands there afterwards ignores clicks for 600 ms.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="16e-drag">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":220,"tray":true,"t2":true,"size":"S","align":"left"}' style="left:24px;top:462px"></div>
+          <div class="dock-ghost" style="left:463px;bottom:78px;width:355px">home · double-click the grip</div>
+          <div class="snap-line v" style="right:16px;top:300px;height:160px"></div><span class="snap-lbl" style="right:24px;top:282px">16 pt</span>
+          <div data-c="tbx" data-o='{"drag":true}' style="right:16px;top:360px"></div>
+          <svg class="cursor" style="right:352px;top:384px" viewBox="0 0 16 22"><use href="#ptr"/></svg>
+        </div>
+        <figcaption><b>16e · Moving it out of the way.</b> Drag by the grip or any empty part of the pill. It snaps 16 pt from screen edges and to bottom-centre / top-centre. It keeps unfolding to the right; if there's no room, the pill shifts left while it's open and goes back when folded. Position is remembered per display. Double-click the grip to go home. Keyboard: ⌥ + arrows moves it 16 pt.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="scene cv-glow" data-shot="16f-bubble-coexist">
+          <div data-c="menubar" data-o='{"tray":"on"}'></div>
+          <div class="app" style="left:420px;top:64px;width:800px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div data-c="bubble" data-o='{"shape":"circle","s":400,"tray":true,"t2":true,"size":"XL","zoom":1.25,"align":"left"}' style="left:24px;bottom:24px"></div>
+          <div class="dock-ghost" style="left:463px;bottom:78px;width:355px;bottom:74px;height:64px;margin-left:-4px;width:363px;z-index:31;background:none;outline-color:rgba(154,240,127,.6)"></div>
+          <div data-c="tbx" data-o='{"exp":true,"notes":"on"}' style="left:463px;bottom:78px"></div>
+        </div>
+        <figcaption><b>16f · With an XL bubble.</b> Dashed green: where the folded pill was. Unfolding grows away from the bubble (rightwards from the folded pill's left edge), so the default bubble corner (bottom-left) never forces a slide. If the bubble is in the bottom-right, unfolding would hit it; then S15 applies and the pill shifts left just enough while unfolded.</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Expands data-c placeholders into identical component markup. */
+const I = (id, cls = '') => `<svg class="i ${cls}"><use href="#${id}"/></svg>`;
+const K = s => s ? `<span class="kbd">${s}</span>` : '';
+const tipHTML = (t, up) => t ? `<span class="tip${up ? ' up' : ''}">${t[1]}${K(t[2])}</span>` : '';
+
+function menubar(o) {
+  const tray = o.tray === 'live'
+    ? `<span class="tray" style="width:auto;padding:0 6px;gap:6px;display:flex;background:rgba(255,75,85,.25)"><span class="traymark live"></span><span class="mono" style="font-size:12px">02:14</span></span>`
+    : `<span class="tray ${o.tray === 'on' ? 'on' : ''}"><span class="traymark"></span></span>`;
+  return `<div class="menubar"><span class="apple"></span><span>${o.app || 'Finder'}</span><span style="font-weight:400">File</span><span style="font-weight:400">Edit</span><span style="font-weight:400">View</span><span class="right">${tray}<span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:32</span></span></div>`;
+}
+
+function tb(o) {
+  const mode = o.mode || 'display';
+  const cam = o.cam !== false, audio = !!o.audio;
+  const f = k => o.focus === k ? ' is-focus-g' : '';
+  const h = k => o.hover === k ? ' is-hover' : '';
+  const t = k => o.tip && o.tip[0] === k ? tipHTML(o.tip) : '';
+  const ord = n => o.order ? `<span class="order" style="top:-24px;left:50%;margin-left:-9px">${n}</span>` : '';
+  const srcs = [['display', 'monitor', 'Full screen'], ['window', 'window', 'Window'], ['area', 'area', 'Area'], ['camera', 'camonly', 'Camera only']];
+  const seg = srcs.map(([k, ic, name]) => {
+    const on = k === mode;
+    const label = on ? `<span class="lbl">${o.label || name}</span>` : '';
+    return `<button role="radio" aria-checked="${on}" aria-label="${name}" class="${f('src-' + k)}${h('src-' + k)}">${I(ic)}${label}${t('src-' + k)}</button>`;
+  }).join('');
+  const coverOff = mode === 'window' || mode === 'camera';
+  const kbdR = o.win ? 'Alt+Shift+R' : '⌥⇧R';
+  return `<div class="tb2 glass" role="toolbar" aria-label="Recording setup"${o.id ? ` id="${o.id}"` : ''}>
+    <button class="b quiet${f('close')}${h('close')}" aria-label="Close setup" data-k="close">${I('x')}${t('close')}${ord(1)}</button>
+    <div class="srcg" role="radiogroup" aria-label="What to record" style="position:relative">${seg}${ord(2).replace('top:-24px', 'top:-30px')}</div>
+    <span class="gap"></span>
+    <button class="b${cam ? '' : ' off'}${f('cam')}${h('cam')}" role="switch" aria-checked="${cam}" aria-label="Camera" data-k="cam">${I(cam ? 'camera' : 'camera-off')}${t('cam')}${ord(3)}</button>
+    <button class="b${audio ? '' : ' off'}${f('audio')}${h('audio')}" role="switch" aria-checked="${audio}" aria-label="System audio" data-k="audio">${I(audio ? 'speaker' : 'speaker-off')}${t('audio')}${ord(4)}</button>
+    ${o.notes ? `<button class="b${o.notes === 'on' ? ' on' : ''}${f('notes')}${h('notes')}" aria-label="Speaker notes" aria-pressed="${o.notes === 'on'}" data-k="notes">${I('notes')}${t('notes')}</button>` : ''}
+    <button class="b swb${f('cover')}${h('cover')}" aria-label="Desktop cover" data-k="cover" ${coverOff ? 'disabled' : ''}><span class="sw2 ${o.cover || 'cv-glow'}"></span>${t('cover')}${ord(5)}</button>
+    <button class="b quiet${f('more')}${h('more')}" aria-label="More" aria-haspopup="menu" data-k="more">${I('dots')}${t('more')}${ord(6)}</button>
+    <button class="rec2${f('rec')}${h('rec')}" data-k="rec" style="position:relative" ${o.recDisabled ? 'disabled' : ''}><span class="rdot"></span>Record${K(kbdR)}${t('rec')}${ord(7)}</button>
+  </div>`;
+}
+
+function face(o, w, h) {
+  const z = o.zoom || 1, vw = 100 / z, vh = vw;
+  const x = 50 - vw / 2, y = 60 - vh / 2;
+  const U = id => `<use href="#${id}" width="100" height="100"/>`;
+  const bg = o.bg === 'image' ? U('bg-img') : o.bg === 'blur' ? `<g filter="url(#soft)">${U('face-bg')}</g>` : U('face-bg');
+  return `<div class="face"><svg viewBox="${x} ${y} ${vw} ${vh}" preserveAspectRatio="xMidYMid slice">${bg}<g transform="translate(14 30) scale(.72)">${U('face-person')}</g></svg></div>`;
+}
+
+function tray(o, width) {
+  const f = k => o.focus === k ? ' is-focus-g' : '';
+  const ord = (n, s) => o.order ? `<span class="order" style="${s}">${n}</span>` : '';
+  const z = o.zoom || 1, max = 2, pct = (z - 1) / (max - 1) * 100;
+  const dets = [0, 25, 50, 75, 100].map(p => `<i class="det" style="left:${p}%"></i>`).join('');
+  const cap = o.cap ? `<i class="cap-mark" style="left:${(o.cap - 1) * 100}%"></i>` : '';
+  const shapes = [['circle', 'sh-circle', 'Circle'], ['squircle', 'sh-squircle', 'Squircle'], ['land', 'sh-land', 'Landscape'], ['port', 'sh-port', 'Portrait']]
+    .map(([k, ic, n]) => `<button role="radio" aria-checked="${o.shape === k}" aria-label="${n}" class="${o.shape === k ? f('shape') : ''}">${I(ic)}</button>`).join('');
+  const bgs = [['none', 'bg-none', 'None'], ['blur', 'bg-blur', 'Blur'], ['image', 'bg-image', 'Image']]
+    .map(([k, ic, n]) => `<button role="radio" aria-checked="${(o.bg || 'none') === k}">${I(ic)}${n}</button>`).join('');
+  const imgpop = o.imgpop ? `<div class="gpop glass down" style="position:absolute;top:calc(100% + 12px);right:0;--ax:calc(100% - 46px);width:max-content">
+      <div class="imgrow"><span class="s" aria-checked="true"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#bg-img"/></svg></span><span class="s"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#bg-img2"/></svg></span><span class="s"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#bg-img3"/></svg></span><span class="s add">${I('plus')}</span></div></div>` : '';
+  if (o.t2) return tray2(o, width, { f, z, pct, dets, cap, imgpop });
+  return `<div class="ctray glass" style="width:${width}px" role="group" aria-label="Camera options">
+    <div class="zoom2" role="slider" aria-label="Zoom" aria-valuemin="1" aria-valuemax="2" aria-valuenow="${z}">${I('zoom', 's14')}<div class="trk">${dets}${cap}<i class="fill" style="width:${pct}%"></i><i class="knob${f('zoom')}" style="left:${pct}%"></i></div><span class="v">${z.toFixed(z % 1 && (z * 100) % 10 ? 2 : 1)}×</span>${ord(8, 'left:-6px;top:6px')}</div>
+    ${o.noshape ? '' : `<div class="row"><button class="b" aria-label="Camera settings">${I('sliders')}${ord(9, 'left:-8px;top:-6px')}</button><div class="tseg" role="radiogroup" aria-label="Shape" style="position:relative">${shapes}${ord(10, 'left:-8px;top:-6px')}</div><button class="b" aria-label="Turn camera off">${I('power')}${ord(11, 'right:-8px;top:-6px')}</button></div>`}
+    <div class="row">${o.noshape ? `<button class="b" aria-label="Camera settings">${I('sliders')}</button>` : ''}<div class="tseg" role="radiogroup" aria-label="Background" style="position:relative">${bgs}${ord(12, 'left:-8px;top:-6px')}</div>${o.noshape ? `<button class="b" aria-label="Turn camera off">${I('power')}</button>` : ''}</div>
+    ${imgpop}
+  </div>`;
+}
+
+/* §14: two rows. Row 1 = how big (size preset · zoom). Row 2 = how it looks (shape · background · settings · off). */
+function tray2(o, width, { f, z, pct, dets, cap, imgpop }) {
+  const tip = k => o.tip && o.tip[0] === k ? `<span class="tip ctr-tip${o.tipUp ? ' up' : ''}">${o.tip[1]}${K(o.tip[2])}</span>` : '';
+  const sz = o.size || 'S';
+  const sizes = ['S', 'M', 'L', 'XL'].map(k => `<button role="radio" aria-checked="${sz === k}" aria-label="Size ${k}" class="${sz === k ? f('size') : ''}">${k}${tip('size-' + k)}</button>`).join('');
+  const shapes = [['circle', 'sh-circle', 'Circle'], ['squircle', 'sh-squircle', 'Squircle'], ['land', 'sh-land', 'Landscape'], ['port', 'sh-port', 'Portrait']]
+    .map(([k, ic, n]) => `<button role="radio" aria-checked="${o.shape === k}" aria-label="${n}" class="${o.shape === k ? f('shape') : ''}">${I(ic)}${tip('shape-' + k)}</button>`).join('');
+  const bgs = [['none', 'bg-none', 'No background effect'], ['blur', 'bg-blur', 'Blur background'], ['image', 'bg-image', 'Image background']]
+    .map(([k, ic, n]) => `<button role="radio" aria-checked="${(o.bg || 'none') === k}" aria-label="${n}" class="${(o.bg || 'none') === k ? f('bg') : ''}">${I(ic)}${tip('bg-' + k)}</button>`).join('');
+  return `<div class="ctray t2 glass" style="width:${width}px" role="group" aria-label="Camera options">
+    <div class="row"><div class="tseg size nogrow" role="radiogroup" aria-label="Bubble size">${sizes}</div>
+      <div class="zoom2" role="slider" aria-label="Zoom" aria-valuemin="1" aria-valuemax="2" aria-valuenow="${z}">${I('zoom', 's14')}<div class="trk">${dets}${cap}<i class="fill" style="width:${pct}%"></i><i class="knob${f('zoom')}" style="left:${pct}%"></i></div><span class="v">${z.toFixed(z % 1 && (z * 100) % 10 ? 2 : 1)}×</span>${tip('zoom')}</div></div>
+    <div class="row"><div class="tseg nogrow" role="radiogroup" aria-label="Shape">${shapes}</div><span class="vsep"></span>
+      <div class="tseg nogrow" role="radiogroup" aria-label="Background">${bgs}</div><span style="flex:1"></span>
+      <button class="b${f('settings')}" aria-label="Camera settings">${I('sliders')}${tip('settings')}</button><button class="b${f('off')}" aria-label="Turn camera off">${I('power')}${tip('off')}</button></div>
+    ${imgpop}
+  </div>`;
+}
+
+/* §15 speaker notes panel */
+const SCRIPT = [
+  'Hi Sam, a quick walkthrough of the new billing dashboard before Thursday.',
+  'First, the revenue chart at the top now splits new and returning customers. Hover any bar to see the exact numbers for that week.',
+  'Second, invoices. Click a row and the PDF opens on the right, so you never lose your place in the list.',
+  'Last thing: exports. The button in the corner gives you a CSV or a one-page PDF summary for the board.'
+];
+function notes(o) {
+  const st = o.state || 'edit', fs = o.fs || 24, rec = st.startsWith('rec') || st === 'scroll-paused';
+  const f = k => o.focus === k ? ' is-focus-g' : '';
+  const h = k => o.hover === k ? ' is-hover' : '';
+  const tip = k => o.tip && o.tip[0] === k ? `<span class="tip${o.tipUp ? ' up' : ''}">${o.tip[1]}${K(o.tip[2])}</span>` : '';
+  const kb = o.win ? 'Alt+Shift+N' : '⌥⇧N';
+  const wpm = o.wpm || 140, auto = o.auto !== false;
+  let body;
+  if (st === 'empty') {
+    body = `<div class="nempty${f('txt')}" role="textbox" aria-multiline="true" aria-label="Speaker notes" tabindex="0">
+      <div class="big">Paste your script${o.focus === 'txt' ? '<span class="caret"></span>' : ''}</div>
+      <div class="sub">Saved on this ${o.win ? 'PC' : 'Mac'} only. Never shows in the recording.</div>
+      <button class="btn${f('paste')}">${I('paste', 's14')}Paste${K(o.win ? 'Ctrl+V' : '⌘V')}</button></div>`;
+  } else {
+    const done = o.done || 0;
+    const paras = SCRIPT.map((t, i) => {
+      let x = t;
+      if (st === 'edit' && o.caret && i === 1) x = t.replace('splits new and returning', 'splits new and <span class="sel">returning</span>');
+      if ((st === 'edit' || st === 'rec-paused') && o.caret && i === (st === 'edit' ? 2 : 1)) x = t + '<span class="caret"></span>';
+      return `<p class="${i < done ? 'done' : ''}">${x}</p>`;
+    }).join('');
+    const rl = rec || st === 'rec-paused' ? `<i class="rl" style="top:${16 + Math.round(fs * 1.42 * 1.2)}px;height:${Math.round(fs * 1.42 * .6)}px"></i>` : '';
+    body = `<div class="txt fade${st === 'edit' || st === 'rec-paused' ? ' editing' : ''}${f('txt')}" role="textbox" aria-multiline="true" aria-readonly="${rec}" aria-label="Speaker notes" tabindex="0">
+      <div class="in" style="font-size:${fs}px;transform:translateY(${-(o.scroll || 0)}px)">${paras}</div>${rl}</div>`;
+  }
+  const fontGrp = `<div class="grp" role="group" aria-label="Text size"><button aria-label="Smaller text" class="${f('fs-')}${h('fs-')}"><span class="a-s">A</span>${tip('fs-')}</button><span class="v">${fs}</span><button aria-label="Larger text" class="${f('fs+')}${h('fs+')}"><span class="a-l">A</span>${tip('fs+')}</button></div>`;
+  const autoTog = `<button class="tog${f('auto')}${h('auto')}" aria-pressed="${auto}">${I('autoscroll')}Auto-scroll${tip('auto')}</button>`;
+  const speed = `<div class="grp${auto ? '' : ' dim'}" role="group" aria-label="Scroll speed"><button aria-label="Slower" class="${f('sp-')}">${I('minus', 's14')}</button><span class="v" style="min-width:64px">${wpm}<small>wpm</small></span><button aria-label="Faster" class="${f('sp+')}">${I('plus', 's14')}</button></div>`;
+  const close = `<button class="ib${f('close')}${h('close')}" aria-label="Hide notes">${I('x')}${tip('close')}</button>`;
+  let foot;
+  if (st === 'empty') foot = `<div class="nfoot"><span class="st" style="padding-left:6px">Plain text · no length limit</span><span class="sp"></span>${close}</div>`;
+  else if (st === 'edit') foot = `<div class="nfoot">${fontGrp}${autoTog}${speed}<span class="sp"></span><span class="st">${o.saved || 'Saved'}</span>${close}</div>`;
+  else if (st === 'rec-hover') foot = `<div class="nfoot">${fontGrp}<button class="tog${f('auto')}${h('auto')}" aria-pressed="true">${I('pause', 's14')}Pause scroll${K(kb)}${tip('auto')}</button>${speed}<span class="sp"></span>${close}</div>`;
+  else if (st === 'rec') foot = `<div class="nfoot quiet"><span class="dot go"></span>Scrolling · ${wpm} wpm<span class="sp"></span>${K(kb)} pause<i class="prog" style="width:${o.prog || 30}%"></i></div>`;
+  else if (st === 'scroll-paused') foot = `<div class="nfoot quiet"><span class="dot hold"></span><span style="color:var(--hold)">Scroll paused</span> · wheel or trackpad to move<span class="sp"></span>${K(kb)} resume<i class="prog" style="width:${o.prog || 30}%"></i></div>`;
+  else if (st === 'rec-paused') foot = `<div class="nfoot">${fontGrp}${autoTog}${speed}<span class="sp"></span><span class="st" style="color:var(--hold)">Paused · editable</span>${close}</div>`;
+  return `<section class="notes" role="region" aria-label="Speaker notes"${o.id ? ` id="${o.id}"` : ''}><span class="grab" aria-hidden="true"></span>${body}${foot}</section>`;
+}
+
+function bubble(o) {
+  const s = o.s || 220;
+  let w = s, h = s, cls = 'circle';
+  if (o.shape === 'squircle') cls = 'rounded';
+  if (o.shape === 'land') { w = Math.round(s * 1.5); h = Math.round(w * 9 / 16); cls = 'r14'; }
+  if (o.shape === 'port') { h = Math.round(s * 1.5); w = Math.round(h * 3 / 4); cls = 'r14'; }
+  if (o.shape === 'stage') { w = o.w; h = o.h; cls = 'r14'; }
+  const ring = '';
+  const rs = o.resize ? `<span class="sizeh" style="right:${cls === 'circle' ? Math.round(s * .146) - 11 : -6}px;top:${cls === 'circle' ? Math.round(s * .146) - 11 : -6}px">${I('resize')}</span><span class="sizechip" style="left:50%;transform:translateX(-50%);top:12px">${o.chip || 'M · 280 pt'}</span>` : '';
+  const trayW = o.noshape ? 360 : o.t2 ? Math.max(o.trayW || 332, w) : Math.max(264, w);
+  const ord = o.order ? `<span class="order" style="left:${w / 2 - 9}px;top:${h / 2 - 9}px">13</span>` : '';
+  return `<div class="bub2${o.align ? ' ' + o.align : ''}">
+    <div class="bubble ${cls}${o.focus === 'bubble' ? ' is-focus-g' : ''}" role="img" aria-label="Camera preview" style="width:${w}px;height:${h}px;position:relative">${face(o, w, h)}${ring}</div>${rs}${ord}
+    ${o.tray ? tray(o, trayW) : ''}
+  </div>`;
+}
+
+function rb(o) {
+  const h = k => o.hover === k ? ' is-hover' : '';
+  const t = k => o.tip && o.tip[0] === k ? tipHTML(o.tip) : '';
+  if (o.state === 'armed') {
+    return `<div class="rb glass" role="toolbar" aria-label="Countdown"><span class="grip"></span>
+      <span class="armed"><span class="n">3</span>Recording in 3 <small>${K('Space')} now</small></span>
+      <button class="btn">Cancel ${K('Esc')}</button></div>`;
+  }
+  const paused = o.state === 'paused';
+  return `<div class="rb glass" role="toolbar" aria-label="Recording controls"><span class="grip"></span>
+    <span class="time${paused ? ' paused' : ''}"><span class="dot${paused ? ' hold' : ' pulse'}"></span>02:14${paused ? ' <small>Paused</small>' : ''}</span>
+    <button class="b stop" aria-label="Stop, Option Shift R"><span class="sq"></span></button>
+    <button class="b${h('pause')}" aria-label="Pause">${I(paused ? 'play' : 'pause')}${t('pause')}</button>
+    <span class="sp"></span>
+    <button class="b" aria-label="Restart">${I('restart')}</button>
+    <button class="b" aria-label="Cancel">${I('trash')}</button>
+    ${o.notes ? `<button class="b${o.notes === 'on' ? ' on' : ''}${o.notes === 'blocked' ? ' blocked' : ''}${h('notes')}" aria-label="Speaker notes${o.notes === 'blocked' ? ', unavailable while recording on this PC' : ''}" aria-pressed="${o.notes === 'on'}" ${o.notes === 'blocked' ? 'aria-disabled="true"' : ''}>${I('notes')}${t('notes')}</button>` : ''}
+    <button class="b" aria-label="Camera">${I('camera')}</button></div>`;
+}
+
+
+/* §16 compact toolbar. Grows to the right from a fixed left end (grip + toggle), so the toggle never moves under the pointer. */
+function tbx(o) {
+  const exp = !!o.exp, src = o.src || 'display', cam = o.cam !== false, audio = !!o.audio;
+  const f = k => o.focus === k ? ' is-focus-g' : '';
+  const h = k => o.hover === k ? ' is-hover' : '';
+  const t = k => o.tip && o.tip[0] === k ? tipHTML(o.tip, o.tipUp) : '';
+  const rv = o.mid ? ' rv' : '';
+  const kbdR = o.win ? 'Alt+Shift+R' : '⌥⇧R';
+  const toggle = `<button class="b quiet tgl${f('tgl')}${h('tgl')}" aria-expanded="${exp}" aria-label="${exp ? 'Fewer controls' : 'All controls'}" data-k="tgl">${I(exp ? 'chev-l' : 'chev-r')}${t('tgl')}</button>`;
+  const srcs = [['display', 'monitor', 'Full screen'], ['window', 'window', 'Window']];
+  const label = o.label || srcs.find(x => x[0] === src)[2];
+  const rec = `<button class="rec2${f('rec')}${h('rec')}" data-k="rec" style="position:relative"><span class="rdot"></span>Record${K(kbdR)}${t('rec')}</button>`;
+  const xb = o.xbadge ? `<button class="xbadge${f('xb')}" aria-label="Close setup">${I('x')}</button>` : '';
+  let mid;
+  if (!exp) {
+    const stat = [];
+    if (!cam) stat.push(`<button class="b stat${f('st-cam')}${h('st-cam')}" aria-label="Camera off, turn on" data-k="st-cam">${I('camera-off')}${t('st-cam')}</button>`);
+    if (audio) stat.push(`<button class="b stat on${f('st-aud')}${h('st-aud')}" aria-label="System audio on, turn off" data-k="st-aud">${I('speaker')}${t('st-aud')}</button>`);
+    mid = `<button class="chip2${f('chip')}${h('chip')}" aria-haspopup="menu" aria-label="What to record: ${label}" data-k="chip">${I(srcs.find(x => x[0] === src)[1])}<span class="lbl">${label}</span>${I('chev-d', 'cd')}${t('chip')}</button>${stat.join('')}`;
+  } else {
+    const seg = srcs.map(([k, ic, name]) => {
+      const on = k === src;
+      return `<button role="radio" aria-checked="${on}" aria-label="${name}" class="${on ? '' : rv.trim()}${f('src-' + k)}">${I(ic)}${on ? `<span class="lbl">${label}</span>` : ''}${t('src-' + k)}</button>`;
+    }).join('');
+    mid = `<button class="b quiet${rv}${f('close')}${h('close')}" aria-label="Close setup" data-k="close">${I('x')}${t('close')}</button>
+      <div class="srcg" role="radiogroup" aria-label="What to record">${seg}</div><span class="gap"></span>
+      <button class="b${cam ? '' : ' off'}${rv}${f('cam')}${h('cam')}" role="switch" aria-checked="${cam}" aria-label="Camera" data-k="cam">${I(cam ? 'camera' : 'camera-off')}${t('cam')}</button>
+      <button class="b${audio ? '' : ' off'}${rv}${f('audio')}${h('audio')}" role="switch" aria-checked="${audio}" aria-label="System audio" data-k="audio">${I(audio ? 'speaker' : 'speaker-off')}${t('audio')}</button>
+      <button class="b${o.notes === 'on' ? ' on' : ''}${rv}${f('notes')}${h('notes')}" aria-label="Speaker notes" aria-pressed="${o.notes === 'on'}" data-k="notes">${I('notes')}${t('notes')}</button>
+      <button class="b swb${rv}${f('cover')}${h('cover')}" aria-label="Desktop cover" data-k="cover"><span class="sw2 ${o.cover || 'cv-glow'}"></span>${t('cover')}</button>
+      <button class="b quiet${rv}${f('more')}${h('more')}" aria-label="More" aria-haspopup="menu" data-k="more">${I('dots')}${t('more')}</button>`;
+  }
+  return `<div class="tb2 tbx glass${exp ? ' exp' : ''}${o.mid ? ' mid' : ''}${o.drag ? ' dragging' : ''}" role="toolbar" aria-label="Recording setup"${o.id ? ` id="${o.id}"` : ''}>${xb}<span class="grip2" aria-hidden="true"></span>${toggle}${mid}${rec}</div>`;
+}
+
+function rbx(o) {
+  const exp = !!o.exp, paused = o.state === 'paused';
+  const f = k => o.focus === k ? ' is-focus-g' : '';
+  const h = k => o.hover === k ? ' is-hover' : '';
+  const t = k => o.tip && o.tip[0] === k ? tipHTML(o.tip, o.tipUp) : '';
+  const toggle = `<button class="b quiet tgl${f('tgl')}" aria-expanded="${exp}" aria-label="${exp ? 'Fewer controls' : 'All controls'}">${I(exp ? 'chev-l' : 'chev-r')}${t('tgl')}</button>`;
+  if (o.state === 'armed') return `<div class="rb rbx glass" role="toolbar" aria-label="Countdown"${o.id ? ` id="${o.id}"` : ''}><span class="grip2"></span>
+      <button class="b quiet cx" aria-label="Cancel countdown, Escape">${I('x')}</button><span class="armed"><span class="n">3</span>Recording in 3<small>${K('Esc')} cancel · ${K('Space')} now</small></span></div>`;
+  const extra = exp ? `<span class="sp"></span>
+    <button class="b" aria-label="Restart">${I('restart')}</button><button class="b" aria-label="Cancel">${I('trash')}</button>
+    <button class="b${o.notes === 'on' ? ' on' : ''}" aria-label="Speaker notes" aria-pressed="${o.notes === 'on'}">${I('notes')}</button><button class="b" aria-label="Camera">${I('camera')}</button>` : '';
+  return `<div class="rb rbx glass${exp ? ' exp' : ''}" role="toolbar" aria-label="Recording controls"${o.id ? ` id="${o.id}"` : ''}><span class="grip2"></span>${toggle}
+    <span class="time${paused ? ' paused' : ''}"><span class="dot${paused ? ' hold' : ' pulse'}"></span>${o.time || '02:14'}</span>
+    <button class="b stop${f('stop')}" aria-label="Stop, Option Shift R" data-k="stop"><span class="sq"></span>${t('stop')}</button>
+    <button class="b${f('pause')}" aria-label="${paused ? 'Resume' : 'Pause'}" data-k="pause">${I(paused ? 'play' : 'pause')}${t('pause')}</button>${extra}</div>`;
+}
+
+const C = { menubar, tb, bubble, rb, notes, tbx, rbx };
+document.querySelectorAll('[data-c]').forEach(el => {
+  const o = JSON.parse(el.dataset.o || '{}');
+  const tpl = document.createElement('template');
+  tpl.innerHTML = C[el.dataset.c](o).trim();
+  const node = tpl.content.firstElementChild;
+  if (el.getAttribute('style')) node.setAttribute('style', (node.getAttribute('style') || '') + ';' + el.getAttribute('style'));
+  if (el.classList.contains('cell2')) node.classList.add('cell2');
+  el.replaceWith(node);
+});
+
+/* Place anchored popovers above their toolbar button (arrow centred on it). */
+function placeAnchors() {
+  document.querySelectorAll('[data-anchor]').forEach(p => {
+    const [id, key] = p.dataset.anchor.split(':');
+    const btn = document.querySelector(`#${id} [data-k="${key}"]`);
+    const scene = p.closest('.scene');
+    const sb = scene.getBoundingClientRect(), bb = btn.getBoundingClientRect();
+    const tbEl = document.getElementById(id).getBoundingClientRect();
+    const pw = p.offsetWidth;
+    const cx = bb.left + bb.width / 2 - sb.left;
+    const left = Math.min(Math.max(cx - pw / 2, 16), sb.width - pw - 16);
+    p.style.left = left + 'px';
+    p.style.bottom = (sb.bottom - tbEl.top + 12) + 'px';
+    p.style.setProperty('--ax', (cx - left) + 'px');
+  });
+}
+function bands() {
+  document.querySelectorAll('[data-band]').forEach(b => {
+    const host = b.parentElement.getBoundingClientRect();
+    const el = document.querySelector(b.dataset.band).getBoundingClientRect();
+    b.style.left = (el.left - host.left) + 'px'; b.style.width = el.width + 'px';
+  });
+}
+document.fonts.ready.then(() => { placeAnchors(); bands(); });
+</script>
+</body>
+</html>

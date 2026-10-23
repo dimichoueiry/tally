@@ -1,0 +1,20 @@
+node_modules/
+.DS_Store
+# build output
+out/
+dist/
+app/native/bin/
+spike/native/cover
+spike/native/desktopshot
+*.app/
+# media / large spike artifacts
+*.mp4
+*.webm
+spike/blur/shots/burst/
+spike/blur/vendor/
+spike/blur/models/selfie_multiclass_256x256.tflite
+# vendored at build time from node_modules (see app/scripts)
+app/resources/vendor/
+# personal captures (camera frames, real-desktop screenshots): keep out of the public repo
+spike/blur/shots/
+docs/*-shots/*.png

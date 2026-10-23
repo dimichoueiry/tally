@@ -1,0 +1,52 @@
+<!doctype html>
+<meta charset="utf-8" />
+<script>
+  // getDisplayMedia (audio answered as loopback by main) -> audio-only MediaRecorder + in-page peak meter.
+  (async () => {
+    const q = new URLSearchParams(location.search);
+    const seconds = Number(q.get('s') || 5);
+    // raw=1: ask Chromium not to run voice processing on the system-audio track.
+    const audio = q.get('raw') === '1'
+      ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2 }
+      : true;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
+    } catch (e) {
+      spike.result({ stage: 'getDisplayMedia-error', error: String(e) });
+      return spike.done(new ArrayBuffer(0));
+    }
+    const at = stream.getAudioTracks()[0];
+    spike.result({
+      stage: 'tracks',
+      video: stream.getVideoTracks().length,
+      audio: stream.getAudioTracks().length,
+      audioState: at && { readyState: at.readyState, muted: at.muted, label: at.label, settings: at.getSettings() },
+    });
+    if (!at) return spike.done(new ArrayBuffer(0));
+    stream.getVideoTracks().forEach((t) => t.stop());
+
+    const audioOnly = new MediaStream([at]);
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    ctx.createMediaStreamSource(audioOnly).connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+    let peak = 0;
+    const meter = setInterval(() => {
+      analyser.getFloatTimeDomainData(buf);
+      for (const v of buf) peak = Math.max(peak, Math.abs(v));
+    }, 50);
+
+    const rec = new MediaRecorder(audioOnly, { mimeType: 'audio/webm;codecs=opus' });
+    const chunks = [];
+    rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    rec.onstop = async () => {
+      clearInterval(meter);
+      spike.result({ stage: 'recorded', inPagePeak: Number(peak.toFixed(4)), endState: at.readyState, chunks: chunks.length });
+      spike.done(await new Blob(chunks).arrayBuffer());
+    };
+    rec.start(1000);
+    setTimeout(() => rec.stop(), seconds * 1000);
+  })();
+</script>

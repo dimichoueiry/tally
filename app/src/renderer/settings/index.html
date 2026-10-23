@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Tally Settings</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<style>
+  body.app { background: var(--bg-1); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .head { -webkit-app-region: drag; height: 52px; flex: none; display: flex; align-items: center; padding-left: 92px; }
+  .head h1 { font-size: var(--t-15); font-weight: 600; letter-spacing: -0.01em; }
+  main { flex: 1; overflow-y: auto; padding: 4px 20px 24px; display: grid; gap: 20px; align-content: start; }
+  section h2 { font-size: var(--t-11); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); margin: 0 4px 8px; }
+  .well { background: var(--bg-0); border-radius: var(--r-md); padding: 6px; display: grid; gap: 2px; }
+  .line { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border-radius: var(--r-sm); }
+  .line > .i { color: var(--fg-2); }
+  .line .lbl { flex: 1; min-width: 0; }
+  .line .lbl b { display: block; font-weight: 500; }
+  .line .lbl small { display: block; color: var(--fg-3); font-size: var(--t-12); margin-top: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 6px 10px 10px; }
+  .tile { position: relative; aspect-ratio: 3 / 2; border-radius: var(--r-sm); background: var(--bg-3) center / cover no-repeat; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: box-shadow var(--d-fast) var(--ease-out); }
+  .tile:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+  .tile[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--ready); }
+  .tile:focus-visible { outline: none; box-shadow: var(--focus); }
+  .tile .cap { position: absolute; left: 6px; bottom: 5px; font-size: var(--t-11); font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .tile .rm { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(11,14,13,.82); color: var(--fg-2); opacity: 0; transition: opacity var(--d-fast); }
+  .tile:hover .rm, .tile .rm:focus-visible { opacity: 1; }
+  .tile .rm:hover { color: var(--fg-1); }
+  .tile.add { display: grid; place-items: center; align-content: center; gap: 4px; background: var(--bg-2); color: var(--fg-2); font-size: var(--t-12); box-shadow: none; }
+  .tile.add:hover { background: var(--bg-3); color: var(--fg-1); }
+  .foot { color: var(--fg-3); font-size: var(--t-12); padding: 2px 4px 0; line-height: 1.45; }
+  .switch:focus-visible { box-shadow: var(--focus); }
+</style>
+<body class="app">
+  <div class="head"><h1>Settings</h1></div>
+  <main id="root" aria-label="Tally settings"></main>
+  <script type="module" src="./settings.js"></script>
+</body>
+</html>

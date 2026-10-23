@@ -1,0 +1,15 @@
+/* Bundled fonts (SIL OFL, see fonts/OFL.txt). Never loaded from the network. */
+@font-face { font-family: 'Geist'; src: url('./fonts/Geist-Variable.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Geist Mono'; src: url('./fonts/GeistMono-Variable.woff2') format('woff2'); font-weight: 100 900; }
+
+/* Overlay pages render on a transparent window; app windows set their own background. */
+html, body { height: 100%; }
+body.overlay { background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none; }
+body.app { background: var(--bg-1); }
+button:focus-visible { outline: none; box-shadow: var(--focus); }
+[hidden] { display: none !important; }
+.ibtn:focus-visible { box-shadow: var(--focus); outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+}

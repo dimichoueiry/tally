@@ -1,0 +1,23 @@
+/* App-level additions on top of tokens.css + components.css (the design's own primitives). */
+
+/* Range input styled as the design's .slider */
+input[type=range].range { -webkit-appearance: none; appearance: none; flex: 1; height: 18px; background: transparent; margin: 0; }
+input[type=range].range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--fg-2) var(--pct, 0%), var(--bg-4) var(--pct, 0%)); }
+input[type=range].range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--fg-1); box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+input[type=range].range:focus-visible { outline: none; }
+input[type=range].range:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus); }
+
+select.select { -webkit-appearance: none; appearance: none; border: 0; color: var(--fg-1); font: inherit; font-size: var(--t-12); padding-right: 24px;
+  background: var(--bg-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237f8a85' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 9.5l4-4 4 4M8 14.5l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 6px center / 14px; }
+select.select:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.switch { cursor: pointer; }
+.switch:focus-visible { outline: none; box-shadow: var(--focus); }
+.seg button:focus-visible { outline: none; box-shadow: var(--focus); }
+
+@keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.dot.pulse { animation: livepulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .dot.pulse { animation: none; } }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .9s linear infinite; }

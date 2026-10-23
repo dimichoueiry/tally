@@ -1,0 +1,16 @@
+{
+  "name": "tally-blur-spike",
+  "private": true,
+  "version": "0.0.0",
+  "description": "LC-6 throwaway: person segmentation for camera Blur/Image backgrounds. Not app code.",
+  "main": "main.js",
+  "scripts": {
+    "demo": "electron .",
+    "bench": "electron . --bench",
+    "compare": "electron . --compare"
+  },
+  "devDependencies": {
+    "@mediapipe/tasks-vision": "1.1.1",
+    "electron": "45.0.0"
+  }
+}

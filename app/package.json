@@ -1,0 +1,95 @@
+{
+  "name": "tally",
+  "productName": "Tally",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-only screen + camera recorder.",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "native": "mkdir -p native/bin && for t in winbounds cover; do for a in arm64 x86_64; do swiftc -O -target $a-apple-macos13 native/$t.swift -o native/bin/$t-$a || exit 1; done; lipo -create native/bin/$t-arm64 native/bin/$t-x86_64 -output native/bin/$t && rm native/bin/$t-arm64 native/bin/$t-x86_64; done",
+    "icons": "node scripts/make-icons.js",
+    "vendor": "node scripts/vendor.mjs",
+    "postinstall": "node scripts/vendor.mjs",
+    "dist:mac": "npm run native && npm test && NODE_OPTIONS=--experimental-require-module electron-builder --mac dmg --arm64 --x64",
+    "dist:win": "NODE_OPTIONS=--experimental-require-module electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "^26.15.3",
+    "geist": "1.8.1"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1"
+  },
+  "type": "module",
+  "build": {
+    "appId": "app.tally.recorder",
+    "productName": "Tally",
+    "copyright": "Local-only screen + camera recorder",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "src/**",
+      "resources/**",
+      "native/bin/**",
+      "!node_modules/**",
+      "!**/*.map"
+    ],
+    "asarUnpack": [
+      "native/bin/**"
+    ],
+    "afterPack": "build/afterPack.cjs",
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "minimumSystemVersion": "13.0",
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSCameraUsageDescription": "Tally shows your camera in a bubble and records it with your screen. The camera is video only.",
+        "NSMicrophoneUsageDescription": "Tally records your microphone only when you turn Microphone on in the toolbar. It is off by default.",
+        "NSAudioCaptureUsageDescription": "Tally records the sound your Mac plays (system audio) only when you turn System audio on."
+      },
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-mac-${arch}.dmg",
+      "title": "${productName} ${version}"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-win-${arch}-setup.exe",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": null
+  }
+}

@@ -1,0 +1,12 @@
+/* Setup v2 glass surface (design/setup-v2.css): toolbar, bar, tray, popovers, picker. */
+:root {
+  --glass: rgba(16, 20, 19, 0.80);
+  --glass-strong: rgba(16, 20, 19, 0.90);
+  --glass-blur: blur(28px) saturate(1.6);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  --glass-well: rgba(0, 0, 0, 0.30);
+  --glass-hover: rgba(255, 255, 255, 0.08);
+  --glass-on: rgba(255, 255, 255, 0.15);
+  --focus-glass: 0 0 0 2px rgba(10, 12, 11, 0.95), 0 0 0 4px var(--ready);
+}
+.glass { background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-edge), var(--shadow-2); color: var(--fg-1); }

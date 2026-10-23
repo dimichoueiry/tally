@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8" />
+<script>
+  // Prefer MP4/H.264 straight from MediaRecorder; fall back to WebM.
+  const CANDIDATES = [
+    'video/mp4;codecs=avc1.640033',
+    'video/mp4;codecs=avc1',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+  ];
+  window.spike.onStart(async ({ seconds }) => {
+    const supported = CANDIDATES.filter((t) => MediaRecorder.isTypeSupported(t));
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 30, max: 30 }, width: { max: 3840 }, height: { max: 2160 } },
+        audio: false,
+      });
+      const track = stream.getVideoTracks()[0];
+      const settings = track.getSettings();
+      const mimeType = supported[0];
+      const chunks = [];
+      const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      const t0 = performance.now();
+      rec.start(1000);
+      // exercise pause/resume (needed for the product): pause 1s in the middle
+      setTimeout(() => rec.pause(), (seconds * 1000) / 2);
+      setTimeout(() => rec.resume(), (seconds * 1000) / 2 + 1000);
+      setTimeout(() => rec.stop(), seconds * 1000 + 1000);
+      rec.onstop = async () => {
+        track.stop();
+        const blob = new Blob(chunks, { type: mimeType });
+        window.spike.done({
+          ext: mimeType.startsWith('video/mp4') ? 'mp4' : 'webm',
+          bytes: new Uint8Array(await blob.arrayBuffer()),
+          meta: { mimeType, supported, settings, wallMs: Math.round(performance.now() - t0), pausedMs: 1000 },
+        });
+      };
+    } catch (e) {
+      window.spike.done({ error: `${e.name}: ${e.message}`, supported });
+    }
+  });
+</script>

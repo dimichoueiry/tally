@@ -1,0 +1,87 @@
+/* Tally — design tokens. Single source of truth; every component reads these. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Surfaces — tonal layering instead of borders. Graphite with a faint green cast. */
+  --bg-0: #0b0e0d;   /* window background, deepest */
+  --bg-1: #131716;   /* popover / panel surface */
+  --bg-2: #1b201e;   /* raised: rows, inputs, segmented track */
+  --bg-3: #252b29;   /* hover */
+  --bg-4: #313835;   /* pressed / selected segment */
+  --scrim: rgba(5, 7, 6, 0.62);
+
+  /* Text */
+  --fg-1: #edf2ef;   /* primary      16.0:1 on bg-1 */
+  --fg-2: #a9b3ae;   /* secondary     8.4:1 on bg-1 */
+  --fg-3: #7f8a85;   /* tertiary      5.1:1 on bg-1, 4.6:1 on bg-2 (meta only, never actions) */
+  --fg-on-ready: #07120a;
+
+  /* Signal colours — the tally-light metaphor */
+  --ready: #9af07f;        /* "preview" tally: ready, selected, focus. 13.0:1 on bg-1 */
+  --ready-dim: rgba(154, 240, 127, 0.14);
+  --live: #ff4b55;         /* "program" tally: recording. 5.5:1 on bg-1 */
+  --live-dim: rgba(255, 75, 85, 0.16);
+  --live-fill: #d92631;    /* filled red surfaces carrying white text: 4.6:1 (--live with white is only 3.3:1) */
+  --hold: #ffc94a;         /* paused / warning. 11.8:1 on bg-1 */
+  --hold-dim: rgba(255, 201, 74, 0.14);
+  --danger: #ff6b73;       /* destructive text. 6.5:1 on bg-1 */
+
+  /* Edges: floating chrome separates from arbitrary desktops by tone + a real
+     shadow + a top-lit highlight. No outline rings. */
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 48px rgba(0, 0, 0, 0.5);
+  --focus: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--ready);
+
+  /* Type */
+  --font-ui: 'Geist', ui-sans-serif, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --t-11: 11px; --t-12: 12px; --t-13: 13px; --t-15: 15px; --t-20: 20px; --t-28: 28px;
+  --lh-tight: 1.25; --lh-body: 1.45;
+
+  /* Space (4pt grid) */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* Camera bubble sizes (logical pt). One base value s per step:
+     circle/squircle = s × s; landscape 16:9 and portrait 3:4 have a long side of 1.5 s.
+     Long side across all shapes: 220–600 pt; rectangles 330–600 pt (Loom's measured range). */
+  --bub-s: 220px; --bub-m: 280px; --bub-l: 340px; --bub-xl: 400px;
+  --bub-long-s: 330px; --bub-long-m: 420px; --bub-long-l: 510px; --bub-long-xl: 600px;
+  --bub-inset: 24px;
+  --bub-zoom-min: 1; --bub-zoom-max: 2; --bub-zoom-step: 0.1;
+
+  /* Radius */
+  --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --d-fast: 120ms; --d-base: 180ms; --d-slow: 260ms;
+}
+
+/* Light appearance — popover and Recordings window follow the OS.
+   Overlays (bar, bubble, countdown, toast) stay dark on purpose: they float over unknown content. */
+.theme-light {
+  --bg-0: #e9edeb;
+  --bg-1: #f7f9f8;
+  --bg-2: #eaefec;
+  --bg-3: #dfe5e2;
+  --bg-4: #d2dad6;
+  --fg-1: #0f1412;   /* 17.6:1 */
+  --fg-2: #46504c;   /*  7.9:1 */
+  --fg-3: #616b67;   /*  5.2:1 */
+  --ready: #2a7d18;  /* 4.9:1 on light surface; fills use --ready-fill */
+  --ready-fill: #9af07f;
+  --ready-dim: rgba(42, 125, 24, 0.12);
+  --live: #d92631;
+  --danger: #c41f2a;
+  --hold: #8a5a00;
+  --edge: inset 0 0 0 1px rgba(15, 20, 18, 0.08);
+  --shadow-2: 0 2px 6px rgba(15, 20, 18, 0.12), 0 18px 48px rgba(15, 20, 18, 0.22);
+  --focus: 0 0 0 2px var(--bg-1), 0 0 0 4px #2a7d18;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --d-fast: 0ms; --d-base: 0ms; --d-slow: 0ms; }
+}

@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; -webkit-app-region: drag; }
+  #wrap { width: 100vw; height: 100vh; border-radius: 50%; overflow: hidden; background: #333; }
+  /* zoom = scale the video inside the mask; mirror like a selfie cam */
+  video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1) scale(1.2); }
+</style>
+<div id="wrap"><video autoplay muted playsinline></video></div>
+<script>
+  (async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 640 }, audio: false });
+      const v = document.querySelector('video');
+      v.srcObject = stream;
+      await new Promise((r) => (v.onplaying = r));
+      const s = stream.getVideoTracks()[0].getSettings();
+      window.spike.bubbleStatus({ ok: true, label: stream.getVideoTracks()[0].label, width: s.width, height: s.height, frameRate: s.frameRate });
+    } catch (e) {
+      window.spike.bubbleStatus({ ok: false, error: `${e.name}: ${e.message}` });
+    }
+  })();
+</script>

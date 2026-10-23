@@ -1,0 +1,266 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>LC-6 blur spike</title>
+<style>
+  body { margin: 0; background: #111; color: #ddd; font: 12px -apple-system, system-ui, sans-serif; display: flex; }
+  #stage { padding: 8px; }
+  #stage canvas { width: 960px; height: 540px; background: #000; display: block; }
+  #ui { padding: 8px; width: 330px; display: grid; grid-template-columns: 90px 1fr 40px; gap: 4px 6px; align-content: start; }
+  #ui label { grid-column: 1; } #ui select, #ui input[type=range] { grid-column: 2; } #ui output { grid-column: 3; }
+  #stats { grid-column: 1 / 4; white-space: pre; font: 12px ui-monospace, monospace; background: #000; padding: 6px; margin-top: 6px; }
+</style>
+<div id="stage"><canvas id="c"></canvas></div>
+<div id="ui"></div>
+<script type="module">
+  import { FilesetResolver, ImageSegmenter } from './vendor/vision_bundle.mjs';
+  import { Compositor } from './compositor.js';
+
+  const W = 1280, H = 720;
+  const qs = new URLSearchParams(location.search);
+  const log = (...a) => { console.log(...a); window.spike.log(...a); };
+  const pct = (a, p) => a.slice().sort((x, y) => x - y)[Math.floor((a.length - 1) * p)];
+
+  // Settings. Defaults are the spike's recommendation.
+  const S = {
+    method: 'gpu', model: 'selfie_segmenter', bg: 'blur', inScale: 1, view: 0, mirror: true,
+    alpha: 0.45, gain: 2.0, feather: 1.0, lo: 0.5, hi: 0.9, refine: true, sigma: 0.012,
+    blurPasses: 2, blurStep: 1.6, sync: false,
+  };
+  const MODELS = {
+    selfie_segmenter: { file: 'selfie_segmenter.tflite', mask: 0, invert: 0 },
+    selfie_segmenter_landscape: { file: 'selfie_segmenter_landscape.tflite', mask: 0, invert: 0 },
+    selfie_multiclass_256x256: { file: 'selfie_multiclass_256x256.tflite', mask: 0, invert: 1 }, // mask 0 = background
+  };
+
+  let video, fileset, seg = null, comp = null, canvas = document.getElementById('c');
+  const small = document.createElement('canvas'); const sctx = small.getContext('2d');
+  let maskFlip = 0;
+
+  async function camera() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: W }, height: { ideal: H }, frameRate: { ideal: 30 } }, audio: false });
+    video = document.createElement('video'); video.muted = true; video.playsInline = true; video.srcObject = stream;
+    await video.play();
+    const st = stream.getVideoTracks()[0].getSettings();
+    log('RESULT camera', JSON.stringify({ label: stream.getVideoTracks()[0].label, w: st.width, h: st.height, fps: st.frameRate }));
+  }
+
+  async function setup() {
+    seg?.close(); seg = null;
+    // Free the old GL context. Without this, switching configs ~7 times hung the page (context limit).
+    canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();
+    const fresh = document.createElement('canvas'); fresh.id = 'c';
+    fresh.addEventListener('webglcontextlost', () => log('RESULT webglcontextlost', S.method, S.model)); fresh.width = W; fresh.height = H;
+    canvas.replaceWith(fresh); canvas = fresh;
+    let loadMs = 0;
+    if (S.bg !== 'none' || S.view === 1) {
+      const t = performance.now();
+      fileset ??= await FilesetResolver.forVisionTasks('app://spike/vendor');
+      seg = await ImageSegmenter.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: `app://spike/models/${MODELS[S.model].file}`, delegate: S.method === 'cpu' ? 'CPU' : 'GPU' },
+        canvas: S.method === 'cpu' ? undefined : canvas,
+        runningMode: 'VIDEO', outputConfidenceMasks: true, outputCategoryMask: false,
+      });
+      loadMs = performance.now() - t;
+    }
+    const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: false });
+    comp = new Compositor(gl, W, H);
+    comp.setImage(bgImage);
+    maskFlip = 0; // MediaPipe's GPU mask texture is already image-space (row 0 = top), verified by eye
+    // Warm-up: the first GPU inference compiles shaders and stalls for seconds. Do it at load, not on frame 1.
+    let warmMs = 0;
+    if (seg) { const t = performance.now(); seg.segmentForVideo(video, performance.now(), () => {}); comp.sync?.(); warmMs = performance.now() - t; }
+    return { loadMs, warmMs };
+  }
+
+  let maskInfo = '';
+  function frame(src = video, ts = performance.now()) {
+    const t0 = performance.now();
+    if (seg) {
+      let input = src;
+      if (S.inScale < 1) {
+        small.width = Math.round(video.videoWidth * S.inScale); small.height = Math.round(video.videoHeight * S.inScale);
+        sctx.drawImage(src, 0, 0, small.width, small.height); input = small;
+      }
+      const M = MODELS[S.model];
+      seg.segmentForVideo(input, ts, (res) => {
+        const m = res.confidenceMasks[M.mask];
+        maskInfo = `${m.width}x${m.height} tex=${m.hasWebGLTexture()}`;
+        if (S.method === 'gpu') comp.pushMask({ texture: m.getAsWebGLTexture(), width: m.width, height: m.height, flip: maskFlip, invert: M.invert }, S);
+        else comp.pushMask({ data: m.getAsFloat32Array(), width: m.width, height: m.height, invert: M.invert }, S); // cpu, and gpu-readback
+      });
+    }
+    const t1 = performance.now();
+    comp.render(src, S);
+    if (S.sync) comp.sync();
+    const t2 = performance.now();
+    return { seg: t1 - t0, comp: t2 - t1, total: t2 - t0 };
+  }
+
+  const snap = (name) => window.spike.savePng(name, canvas.toDataURL('image/png'));
+
+  // ---------- interactive demo ----------
+  async function demo() {
+    const ui = document.getElementById('ui');
+    const sel = (k, opts, re) => { ui.insertAdjacentHTML('beforeend', `<label>${k}</label><select id="${k}">${opts.map((o) => `<option ${o == S[k] ? 'selected' : ''}>${o}</option>`).join('')}</select><output></output>`);
+      document.getElementById(k).onchange = async (e) => { S[k] = isNaN(+e.target.value) ? e.target.value : +e.target.value; if (re) await setup(); }; };
+    const rng = (k, min, max, step) => { ui.insertAdjacentHTML('beforeend', `<label>${k}</label><input type=range id="${k}" min=${min} max=${max} step=${step} value=${S[k]}><output id="${k}o">${S[k]}</output>`);
+      document.getElementById(k).oninput = (e) => { S[k] = +e.target.value; document.getElementById(k + 'o').textContent = S[k]; }; };
+    sel('method', ['gpu', 'cpu', 'gpu-readback'], true); sel('model', Object.keys(MODELS), true); sel('bg', ['none', 'blur', 'image'], true);
+    sel('inScale', [1, 0.5, 0.25], false); sel('view', [0, 1], true); sel('refine', [1, 0], false);
+    rng('alpha', 0.1, 1, 0.05); rng('gain', 0, 6, 0.5); rng('feather', 0, 3, 0.25); rng('lo', 0, 1, 0.05); rng('hi', 0, 1, 0.05);
+    rng('sigma', 0.002, 0.05, 0.002); rng('blurPasses', 0, 4, 1); rng('blurStep', 0.5, 3, 0.1);
+    ui.insertAdjacentHTML('beforeend', '<div id="stats"></div>');
+    await setup();
+    const hist = []; let n = 0, tStart = performance.now();
+    const loop = () => {
+      const t = frame(); hist.push(t); if (hist.length > 90) hist.shift(); n++;
+      if (n % 15 === 0) {
+        const s = hist.map((h) => h.seg), f = hist.map((h) => h.total);
+        document.getElementById('stats').textContent =
+          `seg  med ${pct(s, 0.5).toFixed(1)}  p95 ${pct(s, 0.95).toFixed(1)} ms\nframe med ${pct(f, 0.5).toFixed(1)}  p95 ${pct(f, 0.95).toFixed(1)} ms\nfps ${(n / ((performance.now() - tStart) / 1000)).toFixed(1)}\nmask ${maskInfo}`;
+        if (n > 300) { n = 0; tStart = performance.now(); }
+      }
+      video.requestVideoFrameCallback(loop);
+    };
+    video.requestVideoFrameCallback(loop);
+  }
+
+  // ---------- benchmark ----------
+  const CONFIGS = [
+    { name: 'baseline-nosegment', method: 'cpu', model: 'selfie_segmenter', bg: 'none' },
+    { name: 'cpu-selfie', method: 'cpu', model: 'selfie_segmenter' },
+    { name: 'cpu-selfie-in0.5', method: 'cpu', model: 'selfie_segmenter', inScale: 0.5 },
+    { name: 'cpu-landscape', method: 'cpu', model: 'selfie_segmenter_landscape' },
+    { name: 'cpu-multiclass', method: 'cpu', model: 'selfie_multiclass_256x256' },
+    { name: 'gpu-selfie', method: 'gpu', model: 'selfie_segmenter' },
+    { name: 'gpu-landscape', method: 'gpu', model: 'selfie_segmenter_landscape' },
+    { name: 'gpu-multiclass', method: 'gpu', model: 'selfie_multiclass_256x256' },
+    { name: 'gpu-selfie-readback', method: 'gpu-readback', model: 'selfie_segmenter' },
+    { name: 'gpu-selfie-image', method: 'gpu', model: 'selfie_segmenter', bg: 'image' },
+    { name: 'gpu-selfie-norefine', method: 'gpu', model: 'selfie_segmenter', refine: false },
+    { name: 'gpu-selfie-nosmooth', method: 'gpu', model: 'selfie_segmenter', alpha: 1, feather: 0, lo: 0.5, hi: 0.5001, refine: false },
+    // recommended settings (defaults above); nosync = no per-frame readPixels, i.e. what the app would pay on the CPU
+    { name: 'rec-gpu-selfie', method: 'gpu', model: 'selfie_segmenter' },
+    { name: 'rec-gpu-selfie-nosync', method: 'gpu', model: 'selfie_segmenter', sync: false },
+    { name: 'rec-cpu-selfie-nosync', method: 'cpu', model: 'selfie_segmenter', sync: false },
+    { name: 'baseline-nosegment-nosync', method: 'cpu', model: 'selfie_segmenter', bg: 'none', sync: false },
+  ];
+  const DEFAULTS = { ...S };
+  const WARM = 30, N = 330;
+
+  async function bench() {
+    const only = qs.get('only') ? qs.get('only').split(',') : null;
+    const results = [];
+    for (const cfg of CONFIGS) {
+      if (only && !only.includes(cfg.name)) continue;
+      Object.assign(S, DEFAULTS, { sync: true }, cfg);
+      if (!results.length) { const g = document.createElement('canvas').getContext('webgl2'); const e = g.getExtension('WEBGL_debug_renderer_info'); log('RESULT gl-renderer', g.getParameter(e.UNMASKED_RENDERER_WEBGL)); }
+      const { loadMs, warmMs } = await setup();
+      const r = { name: cfg.name, loadMs: +loadMs.toFixed(0), warmMs: +warmMs.toFixed(0) };
+      const times = []; let i = 0, m0, w0, firstMs;
+      await new Promise((done) => {
+        const loop = async () => {
+          if (i === WARM) { m0 = await window.spike.metrics(); w0 = performance.now(); }
+          const t = frame();
+          if (i === 0) firstMs = t.total;
+          if (i >= WARM) times.push(t);
+          if (i === WARM + 150) {
+            // screenshots on one frame: output, mask, raw. Not timed (the frame above was).
+            await snap(`${cfg.name}.png`);
+            if (cfg.bg !== 'none') { S.view = 1; comp.render(video, S); await snap(`${cfg.name}-mask.png`); S.view = 0; }
+            if (cfg.name === 'gpu-selfie') { const b = S.bg; S.bg = 'none'; comp.render(video, S); await snap('raw.png'); S.bg = b; }
+          }
+          i++;
+          if (times.length >= N) return done();
+          video.requestVideoFrameCallback(loop);
+        };
+        video.requestVideoFrameCallback(loop);
+      });
+      const wall = (performance.now() - w0) / 1000, m1 = await window.spike.metrics();
+      const col = (k) => times.map((t) => t[k]);
+      Object.assign(r, {
+        frames: times.length, firstFrameMs: +firstMs.toFixed(1), mask: maskInfo,
+        segMed: +pct(col('seg'), 0.5).toFixed(2), segP95: +pct(col('seg'), 0.95).toFixed(2),
+        frameMed: +pct(col('total'), 0.5).toFixed(2), frameP95: +pct(col('total'), 0.95).toFixed(2),
+        fps: +(times.length / wall).toFixed(1),
+        cpuRenderer: +((m1.renderer - m0.renderer) / wall * 100).toFixed(0),
+        cpuGpuProc: +((m1.gpu - m0.gpu) / wall * 100).toFixed(0),
+        cpuAll: +((m1.all - m0.all) / wall * 100).toFixed(0),
+      });
+      log('RESULT', JSON.stringify(r));
+      results.push(r);
+    }
+    await window.spike.saveJson(`results${only ? '-' + only.join('+') : ''}.json`, { date: new Date().toISOString(), ua: navigator.userAgent, results });
+    window.spike.quit();
+  }
+
+  // ---------- edge compare: every method on the SAME captured frames ----------
+  const COMPARE = [
+    { name: 'raw', method: 'cpu', bg: 'none' },
+    { name: 'cpu-selfie', method: 'cpu', model: 'selfie_segmenter' },
+    { name: 'gpu-selfie', method: 'gpu', model: 'selfie_segmenter' },
+    { name: 'gpu-selfie-image', method: 'gpu', model: 'selfie_segmenter', bg: 'image' },
+    { name: 'gpu-landscape', method: 'gpu', model: 'selfie_segmenter_landscape' },
+    { name: 'gpu-multiclass', method: 'gpu', model: 'selfie_multiclass_256x256' },
+    { name: 'gpu-selfie-norefine', method: 'gpu', model: 'selfie_segmenter', refine: false },
+    { name: 'gpu-selfie-nosmooth', method: 'gpu', model: 'selfie_segmenter', alpha: 1, feather: 0, lo: 0.5, hi: 0.5001, refine: false },
+    { name: 'gpu-selfie-image-tight', method: 'gpu', model: 'selfie_segmenter', bg: 'image', lo: 0.5, hi: 0.9 },
+    { name: 'gpu-selfie-tight', method: 'gpu', model: 'selfie_segmenter', lo: 0.5, hi: 0.9 },
+    { name: 'gpu-selfie-tight-a03', method: 'gpu', model: 'selfie_segmenter', lo: 0.5, hi: 0.9, alpha: 0.3 },
+    { name: 'gpu-selfie-tight-a07', method: 'gpu', model: 'selfie_segmenter', lo: 0.5, hi: 0.9, alpha: 0.7 },
+    { name: 'gpu-selfie-tight-fixedema', method: 'gpu', model: 'selfie_segmenter', lo: 0.5, hi: 0.9, gain: 0 },
+    { name: 'gpu-selfie-image-tight-s006', method: 'gpu', model: 'selfie_segmenter', bg: 'image', lo: 0.5, hi: 0.9, sigma: 0.006 },
+    { name: 'gpu-multiclass-image-tight', method: 'gpu', model: 'selfie_multiclass_256x256', bg: 'image', lo: 0.5, hi: 0.9 },
+  ];
+  async function compare() {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;left:20px;top:20px;font:bold 40px system-ui;color:#ff0;text-shadow:0 0 6px #000';
+    document.body.append(msg);
+    // show the live camera while counting down
+    Object.assign(S, DEFAULTS, { bg: 'none' }); await setup();
+    const live = () => { frame(); if (!captured) video.requestVideoFrameCallback(live); };
+    let captured = false; video.requestVideoFrameCallback(live);
+    for (let c = qs.get('replay') ? 0 : +(qs.get('countdown') || 5); c > 0; c--) { msg.textContent = `Capturing in ${c}… sit in frame, one hand up near your face`; await new Promise((r) => setTimeout(r, 1000)); }
+    msg.textContent = 'Capturing…';
+    let frames = [];
+    if (qs.get('replay')) {
+      // reuse the burst saved by a previous run, no posing needed
+      for (let i = 0; i < 60; i++) { const im = new Image(); im.src = `./shots/burst/${String(i).padStart(2, '0')}.jpg`; await im.decode(); frames.push(await createImageBitmap(im)); }
+    } else {
+      await new Promise((done) => { const grab = async () => { frames.push(await createImageBitmap(video)); if (frames.length >= 60) return done(); video.requestVideoFrameCallback(grab); }; video.requestVideoFrameCallback(grab); });
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d');
+      for (const [i, f] of frames.entries()) { cx.drawImage(f, 0, 0); await window.spike.savePng(`burst/${String(i).padStart(2, '0')}.jpg`, cv.toDataURL('image/jpeg', 0.92)); }
+    }
+    captured = true; msg.textContent = 'Replaying through each method…';
+    for (const cfg of COMPARE) {
+      Object.assign(S, DEFAULTS, cfg);
+      await setup();
+      let t = performance.now(); // must stay above the warm-up frame's timestamp
+      // flicker = mean |alpha(t) - alpha(t-1)| over all pixels, 0..255 scale. Includes real hand motion, so compare relatively.
+      const gl = canvas.getContext('webgl2'); const buf = new Uint8Array(W * H * 4); let prev = null, diff = 0, n = 0;
+      for (const f of frames) {
+        frame(f, (t += 33.333));
+        if (S.bg === 'none') continue;
+        S.view = 1; comp.render(f, S); S.view = 0;
+        gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+        const a = new Uint8Array(W * H); for (let i = 0; i < a.length; i++) a[i] = buf[i * 4];
+        if (prev) { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - prev[i]); diff += d / a.length; n++; }
+        prev = a;
+        comp.render(f, S);
+      }
+      if (n) log('RESULT flicker', cfg.name, (diff / n).toFixed(3));
+      msg.remove(); await snap(`cmp-${cfg.name}.png`);
+      if (S.bg !== 'none') { S.view = 1; comp.render(frames.at(-1), S); await snap(`cmp-${cfg.name}-mask.png`); S.view = 0; }
+      document.body.append(msg);
+      log('RESULT compared', cfg.name);
+    }
+    window.spike.quit();
+  }
+
+  const bgImage = new Image(); bgImage.src = './assets/office.jpg';
+  await bgImage.decode();
+  try {
+    await camera();
+    if (qs.get('bench')) await bench(); else if (qs.get('compare')) await compare(); else await demo();
+  } catch (e) { log('RESULT error', e.name, e.message, e.stack); if (qs.get('bench') || qs.get('compare')) window.spike.quit(); }
+</script>

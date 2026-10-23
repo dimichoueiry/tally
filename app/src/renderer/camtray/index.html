@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'" />
+<title>Tally camera options</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<link rel="stylesheet" href="../shared/glass.css" />
+<link rel="stylesheet" href="./camtray.css" />
+<body class="overlay">
+  <!-- Toolbar home while it is being dragged (SETUP_V2 16e) -->
+  <div id="ghost" class="ghost" hidden><span>home · double-click the grip</span></div>
+  <div id="box" class="box" hidden>
+    <div id="tray" class="ctray glass" role="group" aria-label="Camera options">
+      <!-- Row 1, how big: size presets · zoom (SETUP_V2 §11.1) -->
+      <div class="row">
+        <div class="tseg size" id="sizes" role="radiogroup" aria-label="Bubble size"></div>
+        <div class="zoom2">
+          <span class="zi" aria-hidden="true"></span>
+          <div id="zoomTrk" class="trk" role="slider" tabindex="0" aria-label="Zoom" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
+            <i class="rail"></i><i class="fill" id="zfill"></i><span id="dets"></span><i class="cap-mark" id="zcap" hidden></i><i class="knob" id="zknob"></i>
+          </div>
+          <span class="v" id="zv">1.0×</span>
+        </div>
+      </div>
+      <!-- Row 2, how it looks: shape | background · camera settings · camera off -->
+      <div class="row">
+        <div class="tseg" id="shapes" role="radiogroup" aria-label="Shape"></div>
+        <span class="vsep" aria-hidden="true"></span>
+        <div class="tseg" id="bgs" role="radiogroup" aria-label="Background"></div>
+        <button class="b" id="settingsBtn" aria-label="Camera settings" aria-haspopup="dialog" aria-expanded="false" title="Camera settings"></button>
+        <button class="b" id="offBtn" aria-label="Turn camera off" title="Turn camera off"></button>
+      </div>
+    </div>
+    <div id="pill" class="camoff glass" role="group" hidden></div>
+    <div id="pop" class="gpop glass" role="dialog" hidden></div>
+  </div>
+  <script type="module" src="./camtray.js"></script>
+</body>
+</html>

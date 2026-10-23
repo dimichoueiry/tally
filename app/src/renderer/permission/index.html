@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Allow screen recording</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<style>
+  body.app { background: var(--bg-1); height: 100vh; display: flex; flex-direction: column; -webkit-app-region: drag; }
+  .onb { padding-top: 56px; }
+  button { -webkit-app-region: no-drag; }
+  .spin { display: inline-block; }
+  .step .state .i { color: var(--ready); }
+</style>
+<body class="app">
+  <div class="onb" id="root"></div>
+  <script type="module" src="./permission.js"></script>
+</body>
+</html>

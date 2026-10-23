@@ -1,0 +1,76 @@
+/* Speaker notes panel (SETUP_V2 §12, mockups 15 / 15b / 15c / 15d). Values are the mockup's
+   (design/setup-v2.css: .notes / .nfoot / .nempty). The window adds 48 pt of transparent,
+   click-through room around the panel for its shadow and tooltips. */
+.notes { --fs: 24px; --lh: calc(var(--fs) * 1.42); position: absolute; left: 48px; top: 48px; width: 560px; border-radius: 20px; display: grid; background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-edge), var(--shadow-2); color: var(--fg-1); overflow: hidden; }
+.notes[hidden] { display: none; }
+.grabzone { position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: 14px; display: grid; place-items: center; cursor: grab; }
+.grabzone:active { cursor: grabbing; }
+.grab { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); margin-top: 2px; transition: background var(--d-fast) var(--ease-out); }
+.grabzone:hover .grab { background: rgba(255,255,255,.3); }
+
+/* ───────── text ───────── */
+.txt { position: relative; height: 204px; overflow: hidden; margin: 8px 8px 0; border-radius: 14px; }
+.txt.editing { background: rgba(0,0,0,.16); }
+.txt.fade textarea.in, .txt.fade .view { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px, #000 calc(100% - 52px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 26px, #000 calc(100% - 52px), transparent 100%); }
+.txt:has(textarea:focus) { box-shadow: inset 0 0 0 2px var(--ready); }
+.in { box-sizing: border-box; width: 100%; margin: 0; padding: 16px 20px 40px 26px; font-family: var(--font-ui); font-size: var(--fs); font-weight: 450; line-height: 1.42; letter-spacing: -0.008em; color: var(--fg-1); white-space: pre-wrap; overflow-wrap: break-word; text-wrap: pretty; }
+textarea.in { position: absolute; inset: 0; height: 100%; display: block; border: 0; outline: 0; resize: none; background: transparent; overflow-y: scroll; scrollbar-width: none; caret-color: var(--ready); user-select: text; -webkit-user-select: text; }
+textarea.in::-webkit-scrollbar { display: none; }
+textarea.in::selection { background: rgba(154,240,127,.24); }
+textarea.in.blank { caret-color: transparent; } /* the empty state draws its own caret */
+.nempty[hidden] { display: none; }
+.view.off { visibility: hidden; pointer-events: none; }
+.view { position: absolute; inset: 0; }
+.layer { position: absolute; inset: 0; overflow: hidden; }
+.layer .in { will-change: transform; }
+.layer.dim .in { color: var(--fg-3); }
+/* reading mark (line 2): the line being read is the one nearest the lens */
+.rl { position: absolute; left: 10px; width: 3px; border-radius: 2px; background: var(--fg-2); }
+
+/* empty state (15b) */
+.nempty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; pointer-events: none; }
+.nempty .big { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg-1); }
+.nempty .caret { display: inline-block; width: 2px; height: 1.05em; margin: 0 0 -0.18em 4px; background: var(--ready); border-radius: 1px; animation: blink 1.1s steps(1) infinite; }
+.txt:not(:has(textarea:focus)) .nempty .caret { visibility: hidden; }
+@keyframes blink { 50% { opacity: 0; } }
+.nempty .sub { color: var(--fg-2); font-size: var(--t-13); max-width: 360px; }
+.nempty .btn { pointer-events: auto; height: 34px; border-radius: var(--r-pill); background: rgba(255,255,255,.1); padding: 0 8px 0 14px; display: inline-flex; gap: 8px; align-items: center; font-weight: 500; color: var(--fg-1); transition: background var(--d-fast) var(--ease-out); }
+.nempty .btn:hover { background: rgba(255,255,255,.16); }
+.nempty .btn svg.i { width: 14px; height: 14px; }
+.nempty .btn .kbd { background: rgba(255,255,255,.08); }
+
+/* ───────── footer ───────── */
+.nfoot { position: relative; display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 8px 0 10px; white-space: nowrap; }
+.nfoot .grp { display: inline-flex; align-items: center; height: 34px; padding: 1px; border-radius: var(--r-pill); background: var(--glass-well); flex: none; transition: opacity var(--d-fast) var(--ease-out); }
+.nfoot .grp button, .nfoot .ib { position: relative; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--fg-2); flex: none; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.nfoot .grp button:hover, .nfoot .ib:hover { background: var(--glass-hover); color: var(--fg-1); }
+.nfoot .grp button[disabled] { opacity: .35; }
+.nfoot .grp .v { min-width: 34px; text-align: center; font: 500 var(--t-12) var(--font-mono); color: var(--fg-1); font-variant-numeric: tabular-nums; }
+.nfoot .grp .v small { color: var(--fg-2); font-size: var(--t-11); margin-left: 3px; }
+.nfoot .a-s { font: 600 12px/1 var(--font-ui); }
+.nfoot .a-l { font: 600 17px/1 var(--font-ui); }
+.nfoot .tog { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 8px; border-radius: var(--r-pill); background: var(--glass-well); color: var(--fg-2); font-size: var(--t-12); font-weight: 500; flex: none; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.nfoot .tog:hover { color: var(--fg-1); }
+.nfoot .tog .i { width: 16px; height: 16px; }
+.nfoot .tog[aria-pressed="true"] { background: var(--glass-on); color: var(--fg-1); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 3px rgba(0,0,0,.35); }
+.nfoot .tog .kbd { background: rgba(255,255,255,.08); }
+.nfoot .grp.dim { opacity: .4; }
+.nfoot .sp { flex: 1; }
+.nfoot .st { font: 400 var(--t-11) var(--font-mono); color: var(--fg-3); white-space: nowrap; }
+.nfoot .st.hold { color: var(--hold); }
+.nfoot svg.i { width: 18px; height: 18px; }
+.nfoot .grp svg.i { width: 14px; height: 14px; }
+/* quiet footer while recording (15c, 15d) */
+.nfoot.quiet { height: 36px; padding: 0 14px 0 16px; gap: 10px; font-size: var(--t-12); color: var(--fg-2); }
+.nfoot.quiet .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fg-2); flex: none; }
+.nfoot.quiet .dot.go { background: var(--fg-1); }
+.nfoot.quiet .dot.hold { background: var(--hold); }
+.nfoot.quiet .hold-t { color: var(--hold); }
+.nfoot.quiet .kbd { background: rgba(255,255,255,.08); }
+.nfoot .prog { position: absolute; left: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.35); }
+
+/* focus (mockup 11): 2 pt green ring with a dark gap */
+.nfoot button:focus-visible, .nempty .btn:focus-visible { outline: none; box-shadow: var(--focus-glass); }
+.tip { pointer-events: none; z-index: 20; }
+
+@media (prefers-reduced-motion: reduce) { .nfoot .grp, .nfoot .tog, .grab, .nempty .btn { transition: none; } .nempty .caret { animation: none; } }

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: app:; connect-src 'self'; font-src 'self'" />
+<title>Tally toolbar</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<link rel="stylesheet" href="../shared/glass.css" />
+<link rel="stylesheet" href="./bar.css" />
+<body class="overlay">
+  <!-- One window from setup to stop (SETUP_V2 §3.8, §15): the pill sits at (ox, oy);
+       the rest of the window is transparent, click-through room for its popovers,
+       tooltips and the notice line. -->
+  <div id="stage">
+    <div id="notice" class="notice glass" hidden></div>
+    <div id="pill"></div>
+    <div id="pop" class="gpop glass" hidden></div>
+  </div>
+  <div class="sr" aria-live="polite" id="announce"></div>
+  <script type="module" src="./bar.js"></script>
+</body>
+</html>

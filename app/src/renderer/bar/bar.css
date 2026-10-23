@@ -1,0 +1,213 @@
+/* Setup toolbar → countdown → recording bar (SETUP_V2 §3.1, §3.8, §15; mockups 02, 16–16f).
+   Values are the mockup's (design/setup-v2.css: .tb2 / .tbx / .chip2 / .rec2 / .rb / .gpop). */
+#stage { position: absolute; inset: 0; }
+
+/* ───────── pill ───────── */
+#pill { position: absolute; display: flex; align-items: center; gap: 4px; height: 56px; padding: 6px 6px 6px 4px; border-radius: var(--r-pill); white-space: nowrap; box-sizing: border-box; transition: box-shadow var(--d-fast) var(--ease-out), transform var(--d-fast) var(--ease-out); }
+#pill.anim { overflow: hidden; }
+#pill.unfolding { transition: width 220ms var(--spring); }
+#pill.folding { transition: width 160ms var(--ease-out); }
+#pill.dragging { box-shadow: var(--glass-edge), 0 22px 50px rgba(0,0,0,.55); transform: scale(1.02); }
+#pill.armed .b, #pill.armed .rec2, #pill.armed .stop { cursor: default; }
+
+.grip2 { width: 14px; height: 40px; flex: none; display: grid; place-items: center; color: var(--fg-3); cursor: grab; }
+.grip2::after { content: ''; width: 5px; height: 16px; background: radial-gradient(circle, currentColor 1.1px, transparent 1.4px) 0 0 / 5px 5.5px; }
+#pill.dragging, #pill.dragging .grip2 { cursor: grabbing; }
+
+.b { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--fg-1); flex: none; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.b svg.i { width: 20px; height: 20px; }
+.b:hover { background: var(--glass-hover); color: var(--fg-1); }
+.b.quiet, .b.off { color: var(--fg-2); }
+.b.on { background: var(--glass-on); color: var(--fg-1); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.b[aria-disabled="true"] { opacity: .32; cursor: default; }
+.b[aria-disabled="true"]:hover { background: none; }
+.b.tgl { width: 36px; color: var(--fg-2); }
+.b.tgl svg.i { width: 18px; height: 18px; }
+.b.stat { width: 32px; height: 32px; color: var(--fg-2); }
+.b.stat svg.i { width: 18px; height: 18px; }
+.b.stat.on { color: var(--fg-1); }
+.b[aria-expanded="true"]:not(.tgl) { background: var(--glass-on); }
+/* Off toggles are slashed, never only dimmed (§3.1) */
+.strike::after { content: ''; position: absolute; left: 50%; top: 50%; width: 24px; height: 2px; margin: -1px 0 0 -12px; background: currentColor; border-radius: 1px; transform: rotate(-45deg); box-shadow: 0 0 0 1.5px rgba(16,20,19,.9); }
+
+/* Source chip (folded source group, S21) */
+.chip2 { position: relative; isolation: isolate; height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 10px 0 12px; border-radius: var(--r-pill); background: var(--glass-well); color: var(--fg-1); font-weight: 500; font-size: var(--t-13); flex: none; box-shadow: inset 0 0 0 3px var(--glass-well); }
+.chip2::before { content: ''; position: absolute; inset: 3px; border-radius: var(--r-pill); background: var(--glass-on); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 3px rgba(0,0,0,.35); z-index: -1; transition: background var(--d-fast) var(--ease-out); }
+.chip2:hover::before, .chip2[aria-expanded="true"]::before { background: rgba(255,255,255,.2); }
+.chip2 svg.i { width: 19px; height: 19px; }
+.chip2 svg.i.cd { width: 14px; height: 14px; color: var(--fg-2); margin-left: -2px; }
+.chip2 .lbl { max-width: 132px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Source group (unfolded): icon-only, the active one also shows its label */
+.srcg { display: flex; align-items: center; gap: 2px; padding: 3px; height: 44px; border-radius: var(--r-pill); background: var(--glass-well); flex: none; box-sizing: border-box; }
+.srcg button { height: 38px; min-width: 42px; padding: 0 11px; border-radius: var(--r-pill); display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: var(--fg-2); font-weight: 500; font-size: var(--t-13); position: relative; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.srcg button:hover { color: var(--fg-1); background: var(--glass-hover); }
+.srcg button[aria-checked="true"] { background: var(--glass-on); color: var(--fg-1); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 3px rgba(0,0,0,.35); padding: 0 14px 0 12px; }
+.srcg button .lbl { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.srcg svg.i { width: 19px; height: 19px; }
+.gap { width: 6px; flex: none; }
+
+/* Cover swatch button */
+.swb .sw2 { width: 24px; height: 24px; border-radius: 7px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3), 0 1px 2px rgba(0,0,0,.4); background-size: cover; background-position: center; }
+
+/* Record: the only filled control on the surface */
+.rec2 { position: relative; height: 44px; display: inline-flex; align-items: center; gap: 10px; padding: 0 14px 0 16px; margin-left: 4px; border-radius: var(--r-pill); background: var(--ready); color: var(--fg-on-ready); font-weight: 600; font-size: var(--t-15); letter-spacing: -0.005em; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 2px 10px rgba(154,240,127,.18); flex: none; transition: filter var(--d-fast) var(--ease-out); }
+.rec2:hover:not([aria-disabled="true"]) { filter: brightness(1.06); }
+.rec2 .rdot { width: 12px; height: 12px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 2.5px rgba(7,18,10,.28); }
+.rec2 .kbd { background: rgba(7,18,10,.13); color: var(--fg-on-ready); }
+.rec2[aria-disabled="true"] { cursor: default; background: rgba(255,255,255,.1); color: var(--fg-2); box-shadow: none; }
+.rec2[aria-disabled="true"] .rdot { background: var(--fg-3); box-shadow: none; }
+.rec2[aria-disabled="true"] .kbd { background: rgba(255,255,255,.08); color: var(--fg-3); }
+
+/* Close badge (folded): top-left, on hover / keyboard focus */
+.xbadge { position: absolute; z-index: 5; left: -6px; top: -6px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--fg-1); color: var(--bg-0); box-shadow: 0 0 0 2px rgba(10,12,11,.7), 0 2px 6px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity var(--d-fast) var(--ease-out); }
+.xbadge::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; } /* 28 pt hit area */
+.xbadge svg.i { width: 12px; height: 12px; stroke-width: 2.4; }
+/* hover, or keyboard focus at the left end of the pill (16b, 16c); not on Record's initial focus */
+#pill.hover .xbadge, #pill:has(.tgl:focus-visible) .xbadge, .xbadge:focus-visible { opacity: 1; pointer-events: auto; }
+
+/* Unfold reveal: fade 0→1, scale .78→1, 15 ms stagger left → right (§15.2) */
+.rv { animation: reveal 220ms var(--spring) both; animation-delay: calc(var(--i, 0) * 15ms); }
+@keyframes reveal { from { opacity: 0; transform: scale(.78); } }
+
+/* ───────── countdown / recording (rb) ───────── */
+.time { display: flex; align-items: center; gap: 9px; min-width: 92px; padding: 0 8px 0 6px; font: 500 var(--t-15) var(--font-mono); font-variant-numeric: tabular-nums; }
+.time.paused { color: var(--hold); }
+.stop { position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--live-fill); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.25); flex: none; transition: filter var(--d-fast) var(--ease-out); }
+.stop:hover { filter: brightness(1.08); }
+.stop .sq { width: 14px; height: 14px; border-radius: 3.5px; background: #fff; }
+.armed { display: flex; align-items: center; gap: 10px; padding: 0 6px 0 4px; font-weight: 500; }
+.armed .n { position: relative; width: 30px; height: 30px; display: grid; place-items: center; font: 600 var(--t-15) var(--font-mono); }
+.armed .n svg { position: absolute; inset: 0; width: 30px; height: 30px; transform: rotate(-90deg); }
+.armed .n circle { fill: none; stroke: var(--live); stroke-width: 2; }
+.armed small { color: var(--fg-2); font-weight: 400; font-size: var(--t-12); display: inline-flex; gap: 6px; align-items: center; margin-left: 8px; }
+.b.cx { width: 36px; color: var(--fg-2); }
+.chipw { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px 0 6px; color: var(--fg-2); font-size: var(--t-12); }
+.chipw .i { color: var(--hold); }
+/* confirm / warn keep v1's content in the 56 pt pill */
+#pill.v-confirm { gap: 6px; padding-left: 16px; }
+.q { display: flex; align-items: center; gap: 10px; font-weight: 500; padding-right: 8px; }
+.q small { color: var(--fg-2); font-size: var(--t-12); font-weight: 400; }
+.pbtn { height: 40px; border-radius: var(--r-pill); padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.1); color: var(--fg-1); font-weight: 500; transition: background var(--d-fast) var(--ease-out); }
+.pbtn:hover { background: rgba(255,255,255,.16); }
+.pbtn.go { background: var(--live-fill); color: #fff; }
+.pbtn.go .kbd { background: rgba(0,0,0,.2); color: #fff; }
+.pbtn .sq { width: 10px; height: 10px; background: #fff; border-radius: 2px; }
+#pill.v-warn { padding-left: 16px; gap: 8px; }
+.note { display: flex; align-items: center; gap: 8px; font-weight: 500; padding-right: 6px; }
+.note .i { color: var(--hold); }
+.note small { color: var(--fg-2); font-weight: 400; font-size: var(--t-12); }
+
+/* ───────── focus (mockup 11, 16c) ───────── */
+.b:focus-visible, .chip2:focus-visible, .srcg button:focus-visible, .stop:focus-visible, .pbtn:focus-visible, .mrow:focus-visible, .swc:focus-visible .s, .gseg button:focus-visible { outline: none; box-shadow: var(--focus-glass); }
+.rec2:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(10,12,11,.95), 0 0 0 4px var(--fg-1); }
+.xbadge:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(10,12,11,.95), 0 0 0 4px var(--ready); }
+.swc:focus-visible { outline: none; }
+
+/* ───────── tooltips (light chip, v1 .tip) ───────── */
+.tip { pointer-events: none; z-index: 20; }
+.tip.down { bottom: auto; top: calc(100% + 10px); }
+.tip.down::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--fg-1); }
+
+/* ───────── notice line (one, above the pill) ───────── */
+.notice { position: absolute; display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 6px 6px 12px; border-radius: 14px; font-size: var(--t-12); color: var(--fg-2); white-space: nowrap; box-sizing: border-box; background: var(--glass-strong); }
+.notice[hidden] { display: none; }
+.notice b { color: var(--fg-1); font-weight: 500; }
+.notice > .i { width: 16px; height: 16px; color: var(--hold); flex: none; }
+.notice.bad > .i { color: var(--live); }
+.notice .act { height: 26px; padding: 0 10px; border-radius: var(--r-pill); background: rgba(255,255,255,.12); color: var(--fg-1); font-weight: 500; font-size: var(--t-12); }
+.notice .act:hover { background: rgba(255,255,255,.18); }
+.notice .tx { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--fg-3); }
+.notice .tx:hover { color: var(--fg-1); background: var(--glass-hover); }
+.notice .tx .i { width: 14px; height: 14px; }
+.notice:not(:has(.act, .tx)) { padding-right: 12px; }
+
+/* ───────── popovers: chip menu, cover picker, More (04, 05, 16c) ───────── */
+.gpop { position: absolute; z-index: 10; border-radius: 16px; padding: 8px; display: grid; gap: 2px; background: var(--glass-strong); box-sizing: border-box; animation: popin var(--d-base) var(--ease-out); }
+.gpop[hidden] { display: none; }
+@keyframes popin { from { opacity: 0; transform: translateY(4px); } }
+.gpop.down { animation-name: popdown; }
+@keyframes popdown { from { opacity: 0; transform: translateY(-4px); } }
+.gpop::after { content: ''; position: absolute; top: 100%; left: var(--ax, 50%); margin-left: -7px; border: 7px solid transparent; border-top-color: rgba(16,20,19,.9); }
+.gpop.down::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: rgba(16,20,19,.9); }
+.gpop h4 { margin: 0; padding: 4px 4px 6px; font-size: var(--t-13); font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.gpop h4 small { font-weight: 400; color: var(--fg-2); font-size: var(--t-12); }
+.gpop p.h { margin: 4px 4px 2px; color: var(--fg-2); font-size: var(--t-12); line-height: 1.45; white-space: normal; }
+.mrow { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 10px; color: var(--fg-1); text-align: left; width: 100%; box-sizing: border-box; font-size: var(--t-13); transition: background var(--d-fast) var(--ease-out); }
+button.mrow:hover, .mrow.hl, .mrow[role=menuitemradio][aria-checked="true"] { background: var(--glass-hover); }
+.mrow > .i { width: 18px; height: 18px; color: var(--fg-2); flex: none; }
+.mrow .l { flex: 1; font-weight: 500; }
+.mrow .l small { display: block; color: var(--fg-2); font-weight: 400; font-size: var(--t-11); margin-top: 1px; }
+.mrow .k { color: var(--fg-2); font: 500 var(--t-11) var(--font-mono); }
+.mrow .ck { width: 16px; height: 16px; color: var(--ready); }
+.mrow.tall { min-height: 52px; }
+.msep { height: 1px; margin: 4px 6px; background: rgba(255,255,255,.07); }
+.gseg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--r-pill); background: var(--glass-well); }
+.gseg button { height: 28px; padding: 0 11px; border-radius: var(--r-pill); color: var(--fg-2); font: 500 var(--t-12) var(--font-mono); }
+.gseg button[aria-checked="true"] { background: var(--glass-on); color: var(--fg-1); }
+.gseg button[disabled] { opacity: .4; }
+.gpop .switch { background: rgba(255,255,255,.16); }
+.gpop .switch[aria-checked="true"] { background: var(--ready); }
+.cost { color: var(--fg-2); font: 400 var(--t-11) var(--font-mono); padding: 0 10px 4px 38px; }
+.gpop.more { width: 300px; }
+.gpop.chipmenu { width: 236px; }
+.gpop.cover { padding: 12px; gap: 10px; }
+.gseg.pv { display: flex; width: 100%; box-sizing: border-box; }
+.gseg.pv button { flex: 1; padding: 0 6px; font-family: var(--font-ui); white-space: nowrap; }
+.swg { display: grid; grid-template-columns: repeat(4, 56px); gap: 12px 10px; }
+.swc { display: grid; justify-items: center; gap: 6px; font-size: var(--t-11); color: var(--fg-2); text-align: center; }
+.swc .s { width: 56px; height: 38px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); display: grid; place-items: center; color: var(--fg-2); background-size: cover; background-position: center; transition: box-shadow var(--d-fast) var(--ease-out); }
+.swc .s svg.i { width: 18px; height: 18px; }
+.swc .s.add { background: var(--glass-well); box-shadow: none; }
+.swc:hover .s { box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+.swc[aria-checked="true"] { color: var(--fg-1); }
+.swc[aria-checked="true"] .s { box-shadow: 0 0 0 2px rgba(10,12,11,.95), 0 0 0 4px var(--ready); }
+.cv-off { background: var(--glass-well); }
+.cv-glow { background: radial-gradient(60px 40px at 72% 22%, #2d4a41 0%, transparent 70%), radial-gradient(50px 40px at 14% 92%, #22304a 0%, transparent 70%), linear-gradient(165deg, #1a2220, #111615); }
+.cv-deepblue { background: radial-gradient(60px 40px at 70% 20%, #1f3a66 0%, transparent 70%), linear-gradient(170deg, #111c33, #0a1020); }
+.cv-fog { background: radial-gradient(60px 40px at 30% 20%, #f3f6f4 0%, transparent 70%), linear-gradient(165deg, #dfe6e2, #c9d3ce); }
+.cv-graphite { background: #1d2420; }
+.cv-black { background: #050606; }
+.cv-wallpaper { background: radial-gradient(60px 40px at 78% 18%, #2c4a5a 0%, transparent 70%), linear-gradient(160deg, #1a2730, #121820 60%, #151320); }
+.cv-none { background: repeating-linear-gradient(135deg, #2a302e 0 4px, #1b201e 4px 8px); }
+
+@media (prefers-reduced-motion: reduce) {
+  #pill, #pill.unfolding, #pill.folding { transition: none; }
+  .rv, .gpop { animation: none; }
+}
+
+/* ───────── microphone in More: devices + live level, or why it is off ───────── */
+.micd { display: grid; gap: 6px; padding: 0 6px 6px 38px; }
+.devs { display: grid; gap: 2px; }
+.dev { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px 0 6px; border-radius: 10px; background: transparent; color: var(--fg-1); font-size: var(--t-12); text-align: left; }
+.dev:hover { background: var(--glass-hover); }
+.dev[aria-checked="true"] { background: var(--glass-well); }
+.dev.none { color: var(--fg-2); }
+.dev .ck { width: 14px; display: grid; color: var(--ready); }
+.dev .ck svg.i { width: 14px; height: 14px; }
+.dev .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dev:focus-visible { outline: none; box-shadow: var(--focus-glass); }
+.lvl { height: 6px; margin: 2px 4px 0; border-radius: var(--r-pill); background: var(--glass-well); overflow: hidden; }
+.lvl span { display: block; height: 100%; border-radius: inherit; background: var(--ready); transform: scaleX(0); transform-origin: left; }
+.micx { display: flex; align-items: flex-start; gap: 8px; padding: 2px 10px 8px 38px; color: var(--fg-2); font-size: var(--t-12); line-height: 1.45; white-space: normal; flex-wrap: wrap; }
+.micx > .i { color: var(--hold); margin-top: 2px; flex: none; }
+.micx > span { flex: 1; min-width: 180px; }
+.micx .act { height: 26px; padding: 0 10px; border-radius: var(--r-pill); background: rgba(255,255,255,.12); color: var(--fg-1); font-weight: 500; font-size: var(--t-12); }
+.micx .act:hover { background: rgba(255,255,255,.18); }
+
+/* ───────── collapsed: the minimal pill (grip · expand · Record, or Stop · Pause · Restart) ───────── */
+#pill.collapsed { height: 44px; margin-top: 6px; padding: 2px 4px 2px 2px; gap: 2px; }
+#pill.collapsed .grip2 { height: 32px; }
+#pill.collapsed .b { width: 36px; height: 36px; }
+#pill.collapsed .b.tgl { width: 30px; }
+#pill.collapsed .b svg.i { width: 18px; height: 18px; }
+#pill.collapsed .stop { width: 36px; height: 36px; }
+#pill.collapsed .stop .sq { width: 12px; height: 12px; border-radius: 3px; }
+.rec2.mini { width: 36px; height: 36px; padding: 0; margin-left: 2px; justify-content: center; gap: 0; }
+
+/* ───────── privacy: findable from every toolbar state ───────── */
+.gpop h4.pvh { padding-top: 2px; }
+/* collapsed pill: a 14 pt hint only when bars are hidden in the video; not a control */
+.pvdot { width: 16px; height: 36px; flex: none; display: grid; place-items: center; color: var(--fg-2); }
+.pvdot svg.i { width: 14px; height: 14px; }
+.mrow > .i.chev { width: 16px; height: 16px; color: var(--fg-3); }

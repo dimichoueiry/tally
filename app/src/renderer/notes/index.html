@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'" />
+<title>Tally speaker notes</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<link rel="stylesheet" href="../shared/glass.css" />
+<link rel="stylesheet" href="./notes.css" />
+<body class="overlay">
+  <!-- Speaker notes (SETUP_V2 §12, mockups 15–15d). Never captured: the window is
+       content-protected before its first show. -->
+  <section id="panel" class="notes" role="region" aria-label="Speaker notes" hidden>
+    <span class="grabzone" data-drag aria-hidden="true"><span class="grab"></span></span>
+    <div id="txt" class="txt fade">
+      <!-- Setup / paused: plain-text editing. Same font, padding and wrapping as the read
+           view, so the scroll position maps 1:1 between them. -->
+      <textarea id="ed" class="in" aria-label="Speaker notes" spellcheck="false" autocomplete="off"></textarea>
+      <!-- Countdown / recording: read-only. Two copies of the text: lines above the
+           reading mark (line 2) show the dim copy, the rest the bright one. -->
+      <div id="view" class="view off" role="textbox" aria-multiline="true" aria-readonly="true" aria-label="Speaker notes">
+        <div class="layer dim"><div class="in" id="inDim"></div></div>
+        <div class="layer bright" id="bright"><div class="in" id="inBright"></div></div>
+        <i class="rl" id="rl" aria-hidden="true"></i>
+      </div>
+      <div id="empty" class="nempty" hidden>
+        <div class="big">Paste your script<span class="caret" aria-hidden="true"></span></div>
+        <div class="sub">Saved on this Mac only. Never shows in the recording.</div>
+        <button class="btn" data-act="paste">Paste<span class="kbd" id="pasteKey"></span></button>
+      </div>
+    </div>
+    <div id="foot" class="nfoot"></div>
+  </section>
+  <div class="sr" aria-live="polite" id="announce"></div>
+  <script type="module" src="./notes.js"></script>
+</body>
+</html>

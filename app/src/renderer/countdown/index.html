@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Tally countdown</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<style>
+  #frame { position: absolute; pointer-events: none; }
+  #frame.full { inset: 0; box-shadow: inset 0 0 0 4px var(--live); }
+  #frame.win { box-shadow: 0 0 0 3px var(--live), 0 0 0 9999px rgba(5,7,6,.45); border-radius: 2px; }
+  .tag { position: absolute; display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 6px; background: var(--live-fill); color: #fff; font-size: var(--t-12); font-weight: 600; white-space: nowrap; }
+  .count { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 18px; }
+  .count .num span { transition: opacity var(--d-base) var(--ease-out); }
+  .count .num circle { transition: none; }
+</style>
+<body class="overlay">
+  <div id="root" hidden>
+    <div id="frame"></div>
+    <div class="tag" id="tag"></div>
+    <div class="count" id="count">
+      <div class="num"><svg viewBox="0 0 170 170" aria-hidden="true"><circle id="ring" cx="85" cy="85" r="83"></circle></svg><span id="digit">3</span></div>
+      <div class="hints"><span><span class="kbd">Space</span> Start now</span><span><span class="kbd">Esc</span> Cancel</span></div>
+    </div>
+    <div class="sr" aria-live="assertive" id="live"></div>
+  </div>
+  <script type="module" src="./countdown.js"></script>
+</body>
+</html>

@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tally — v1 UI mockups</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+</head>
+<body>
+
+<!-- Icon sprite: one stroke family (1.75px, round caps), Lucide-style geometry drawn for this project -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="monitor" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8 20h8M12 16.5V20"/></symbol>
+  <symbol id="window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9 6.5h.01"/></symbol>
+  <symbol id="camera" viewBox="0 0 24 24"><rect x="2.5" y="6" width="13.5" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></symbol>
+  <symbol id="clean" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 21h10M9 8l6 6M15 8l-6 6" opacity="0"/><path d="M14 8.5l2.5-2.5M7.5 14.5l7-7" /></symbol>
+  <symbol id="speaker" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/></symbol>
+  <symbol id="speaker-off" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+  <symbol id="quality" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15V9m0 3h3m0-3v6M14 9h1.5a3 3 0 010 6H14z"/></symbol>
+  <symbol id="chev-r" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+  <symbol id="chev-d" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+  <symbol id="updown" viewBox="0 0 24 24"><path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="library" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M10 9.5v5l4-2.5z"/></symbol>
+  <symbol id="folder" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 015.5 5H10l2 2.5h6.5A2.5 2.5 0 0121 10v7.5a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 17.5z"/></symbol>
+  <symbol id="pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.5 8.5 0 00-5.8 2.4L4 8.5"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 002 1.8h7a2 2 0 002-1.8l1-12M9 7V4.5h6V7"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></symbol>
+  <symbol id="reveal" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 015.5 5H10l2 2.5h6.5A2.5 2.5 0 0121 10v7.5a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 17.5z"/><path d="M12 11v5M9.5 13.5L12 11l2.5 2.5"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+  <symbol id="pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 4L2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2h.01"/></symbol>
+  <symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.3h.01"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="disk" viewBox="0 0 24 24"><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M5 13l2.5-8h9L19 13M16.5 16.5h.01"/></symbol>
+  <symbol id="unplug" viewBox="0 0 24 24"><path d="M6 18l-3 3M17.5 3L15 5.5M21 6.5L18.5 9M11 9l-2 2M14 12l-2 2"/><path d="M8 10l6 6-2 2a4.2 4.2 0 01-6-6zM16 14l-6-6 2-2a4.2 4.2 0 016 6z"/></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol>
+  <symbol id="blur" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M6.5 19.5a5.5 5.5 0 0111 0"/><path d="M3 5h.01M3 9h.01M3 13h.01M21 5h.01M21 9h.01M21 13h.01M5 3h.01M19 3h.01" stroke-width="2.4"/></symbol>
+  <symbol id="eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0112 5c5 0 8.5 4.5 9.5 7-.4 1-1.2 2.3-2.4 3.6M6.6 6.6C4.5 8 3.1 10.1 2.5 12c1 2.5 4.5 7 9.5 7a9.6 9.6 0 004.4-1.1M9.9 9.9a3 3 0 004.2 4.2"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/></symbol>
+  <symbol id="arrow-r" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/></symbol>
+
+  <!-- Camera image stand-in: background (blurrable) + person -->
+  <symbol id="face-bg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#3a4b55"/>
+    <rect x="-5" y="8" width="38" height="56" fill="#c9d6dc" opacity=".55"/>
+    <rect x="66" y="0" width="40" height="100" fill="#2b3740"/>
+    <rect x="70" y="16" width="8" height="22" fill="#b7754b"/><rect x="80" y="20" width="6" height="18" fill="#6b8e6b"/><rect x="88" y="14" width="9" height="24" fill="#c9b27c"/>
+    <rect x="70" y="46" width="27" height="3" fill="#1e272d"/>
+    <circle cx="20" cy="80" r="14" fill="#5d7f4f" opacity=".8"/>
+  </symbol>
+  <symbol id="bg-img" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#3f6f8f"/><rect y="0" width="100" height="45" fill="#9cc3d6"/>
+    <path d="M-5 70 L25 38 L48 62 L70 34 L105 72 V105 H-5z" fill="#4c6b5a"/><path d="M-5 82 Q40 66 105 84 V105 H-5z" fill="#2f4a3d"/>
+  </symbol>
+  <symbol id="face-person" viewBox="0 0 100 100">
+    <path d="M14 104c2-20 16-30 36-30s34 10 36 30z" fill="#2c3e57"/>
+    <path d="M42 70h16v9a8 8 0 01-16 0z" fill="#c99579"/>
+    <ellipse cx="50" cy="50" rx="15" ry="18.5" fill="#d9a587"/>
+    <path d="M34.5 47c-1-12 6.5-19 15.5-19s17 6 15.5 19c-2-6-6.5-9-15.5-9.5S36.5 41 34.5 47z" fill="#2d2118"/>
+  </symbol>
+</svg>
+
+<main class="doc">
+  <header class="doc-head">
+    <div>
+      <h1><span class="mark lg" aria-hidden="true"></span>Tally</h1>
+      <p>v1 UI for a local-only screen + camera recorder. Every state of the approved scope, on macOS first, with Windows differences in §11. Spec: <code class="mono">DESIGN_SPEC.md</code>.</p>
+    </div>
+    <nav class="doc-nav" aria-label="Screens">
+      <a href="#s1">1 Launcher</a><a href="#s2">2 Camera bubble</a><a href="#s3">3 Countdown</a><a href="#s4">4 Control bar</a>
+      <a href="#s5">5 After stop</a><a href="#s6">6 Recordings</a><a href="#s7">7 Permissions</a><a href="#s8">8 Errors</a><a href="#s11">11 Windows</a>
+    </nav>
+  </header>
+
+  <!-- ═════════════ 1. LAUNCHER POPOVER ═════════════ -->
+  <section class="sec" id="s1">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Menu-bar launcher</h2>
+      <p>One popover, one primary action. Settings are rows that show their current value and expand in place. Everything persists, so the steady-state path is: click the tray icon, click Record. The camera bubble previews live on screen whenever the camera is on and the popover is open.</p></div>
+    <div class="shots">
+
+      <figure class="shot">
+        <div class="frame desk" data-shot="01-launcher-default">
+          <div class="menubar"><span class="apple"></span><span>Finder</span><span style="font-weight:400">File</span><span style="font-weight:400">Edit</span><span style="font-weight:400">View</span>
+            <span class="right"><span class="tray on"><span class="traymark"></span></span><span class="mb-icon"></span><span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:32</span></span></div>
+          <div class="desk-icons"><i></i><i></i><i></i></div>
+          <div class="app" style="left:60px;top:70px;width:640px;height:460px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="bub-wrap" style="left:84px;top:470px"><div class="bubble circle" style="width:168px;height:168px;position:relative"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div></div>
+          <div class="pop mac" style="right:150px;top:34px;--arrow-x:66px" role="dialog" aria-label="Tally recorder">
+            <div class="pop-head"><span class="mark idle" aria-hidden="true"></span><span class="name">Tally</span>
+              <span class="acts"><button class="ibtn" aria-label="Recordings"><svg class="i"><use href="#library"/></svg></button><button class="ibtn" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src">
+              <div class="seg full src-tabs" role="tablist"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div>
+              <div class="src-hero">
+                <button class="src-tile" aria-pressed="true"><div class="thumb"></div><div class="cap">Built-in <span>3024×1964</span></div></button>
+                <button class="src-tile" aria-pressed="false"><div class="thumb t2"></div><div class="cap">LG UltraFine <span>3840×2160</span></div></button>
+              </div>
+            </div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">FaceTime HD · Circle M</span><span class="switch" role="switch" aria-checked="true" aria-label="Camera"></span></div>
+              <div class="opt"><svg class="i"><use href="#clean"/></svg><span class="lbl"><b>Clean desktop</b></span><span class="val">Graphite</span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#speaker-off"/></svg><span class="lbl"><b>System audio</b></span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone">
+              <button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button>
+              <div class="rec-meta"><span>Saves to ~/Movies/Tally</span><span class="mono">212 GB free</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Default.</b> Display source, camera on (bubble previews bottom-left), clean desktop off, system audio off, 1080p30. Record is the only filled control.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad" data-shot="01b-launcher-window-source" style="width:404px;height:640px">
+          <div class="pop" style="left:32px;top:32px" role="dialog" aria-label="Tally recorder">
+            <div class="pop-head"><span class="mark idle"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src">
+              <div class="seg full src-tabs"><button aria-pressed="false"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="true"><svg class="i s14"><use href="#window"/></svg>Window</button></div>
+              <div class="win-list" role="listbox" aria-label="Windows">
+                <div class="win-row" role="option" aria-selected="true"><div class="thumb t3"></div><div class="t"><b>Acme Dashboard — Overview</b><span><i class="app-ic" style="background:#4f8cf7"></i>Chrome</span></div><svg class="i chk"><use href="#check"/></svg></div>
+                <div class="win-row is-hover" role="option"><div class="thumb t4"></div><div class="t"><b>api/routes.ts — acme</b><span><i class="app-ic" style="background:#3b82f6"></i>VS Code</span></div><svg class="i chk"><use href="#check"/></svg></div>
+                <div class="win-row" role="option"><div class="thumb t5"></div><div class="t"><b>Launch plan</b><span><i class="app-ic" style="background:#e5e7eb"></i>Notion</span></div><svg class="i chk"><use href="#check"/></svg></div>
+                <div class="win-row" role="option"><div class="thumb t6"></div><div class="t"><b>zsh — ~/acme</b><span><i class="app-ic" style="background:#111"></i>Terminal</span></div><svg class="i chk"><use href="#check"/></svg></div>
+                <div class="win-row" role="option"><div class="thumb t2"></div><div class="t"><b>Figma — Onboarding v3</b><span><i class="app-ic" style="background:#a259ff"></i>Figma</span></div><svg class="i chk"><use href="#check"/></svg></div>
+              </div>
+            </div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">Circle M</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record window<span class="kbd on-ready">⌥⇧R</span></button></div>
+          </div>
+        </div>
+        <figcaption><b>Window source.</b> List, not a grid: titles are what you scan for. Frontmost window preselected. Clean desktop is hidden in window mode (nothing behind the window is captured).</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad" data-shot="01c-launcher-camera-expanded" style="width:404px;height:640px">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="pop-head"><span class="mark idle"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src"><div class="seg full src-tabs"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div></div>
+            <div class="opts">
+              <div class="opt open" aria-expanded="true"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><svg class="i s14 chev"><use href="#chev-d"/></svg><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt-detail">
+                <div class="row"><label>Device</label><div class="select"><span>FaceTime HD Camera</span><svg class="i s14"><use href="#updown"/></svg></div></div>
+                <div class="row"><label>Shape</label><div class="seg"><button aria-pressed="true" aria-label="Circle"><span class="shape-ic c"></span></button><button aria-pressed="false" aria-label="Squircle"><span class="shape-ic r"></span></button><button aria-pressed="false" aria-label="Landscape 16:9"><span class="shape-ic w"></span></button><button aria-pressed="false" aria-label="Portrait 3:4"><span class="shape-ic p"></span></button></div></div>
+                <div class="row"><label>Size</label><div class="seg"><button aria-pressed="true">S</button><button aria-pressed="false">M</button><button aria-pressed="false">L</button><button aria-pressed="false">XL</button></div></div>
+                <div class="row"><label>Zoom</label><div class="slider"><span class="fill" style="width:40%"></span><span class="knob" style="left:40%"></span></div><span class="mono" style="font-size:12px;color:var(--fg-2);width:34px;text-align:right">1.4×</span></div>
+                <div class="row"><label>Background</label><div class="seg"><button aria-pressed="false">None</button><button aria-pressed="true">Blur</button><button aria-pressed="false">Image</button></div></div>
+              </div>
+              <div class="opt"><svg class="i"><use href="#clean"/></svg><span class="lbl"><b>Clean desktop</b></span><span class="val">Off</span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#speaker-off"/></svg><span class="lbl"><b>System audio</b></span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button></div>
+          </div>
+        </div>
+        <figcaption><b>Camera expanded.</b> 4 shapes, 4 sizes, zoom, background None / Blur / Image. Clicking the row label expands; the switch toggles without expanding. Source tiles collapse to the tab strip while a row is open so the popover never needs scrolling.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad" data-shot="01d-launcher-clean-quality" style="width:404px;height:640px">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="pop-head"><span class="mark idle"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src"><div class="seg full src-tabs"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div></div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">Circle M</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt open"><svg class="i"><use href="#clean"/></svg><span class="lbl"><b>Clean desktop</b></span><svg class="i s14 chev"><use href="#chev-d"/></svg><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt-detail">
+                <div class="row"><label>Cover</label><div class="swatches">
+                  <button class="sw" aria-pressed="true" aria-label="Graphite" style="background:#1d2420"></button>
+                  <button class="sw" aria-label="Black" style="background:#000"></button>
+                  <button class="sw" aria-label="Fog" style="background:#d9dedb"></button>
+                  <button class="sw" aria-label="Deep blue" style="background:#14233a"></button>
+                  <button class="sw wall" aria-label="Current wallpaper"></button>
+                  <button class="sw plus" aria-label="Choose image"><svg class="i s14"><use href="#plus"/></svg></button></div></div>
+                <div style="color:var(--fg-3);font-size:12px">Hides desktop icons and widgets. Apps, menu bar and Dock stay.</div>
+              </div>
+              <div class="opt"><svg class="i"><use href="#speaker"/></svg><span class="lbl"><b>System audio</b></span><span class="val">On</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt open"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><svg class="i s14 chev"><use href="#chev-d"/></svg></div>
+              <div class="opt-detail">
+                <div class="row"><label>Size</label><div class="seg"><button aria-pressed="true">1080p</button><button aria-pressed="false">Native</button></div></div>
+                <div class="row"><label>Frames</label><div class="seg"><button aria-pressed="true">30 fps</button><button aria-pressed="false">60 fps</button></div></div>
+                <div class="mono" style="color:var(--fg-3);font-size:11px">≈ 0.9 GB per hour · Native would be 3024×1964</div>
+              </div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button></div>
+          </div>
+        </div>
+        <figcaption><b>Clean desktop + quality expanded, system audio on.</b> Cover is a colour or the current wallpaper (icons removed). Quality shows the cost in file size, not bitrates.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad theme-light" data-shot="01e-launcher-light" style="width:404px;height:560px;background:#c9d2ce">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="pop-head"><span class="mark idle" style="background:#0f1412"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src">
+              <div class="seg full src-tabs"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div>
+              <div class="src-hero"><button class="src-tile" aria-pressed="true"><div class="thumb"></div><div class="cap">Built-in <span>3024×1964</span></div></button><button class="src-tile" aria-pressed="false"><div class="thumb t2"></div><div class="cap">LG UltraFine <span>3840×2160</span></div></button></div>
+            </div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">Circle M</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt"><svg class="i"><use href="#clean"/></svg><span class="lbl"><b>Clean desktop</b></span><span class="val">Graphite</span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#speaker-off"/></svg><span class="lbl"><b>System audio</b></span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec is-focus"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button><div class="rec-meta"><span>Saves to ~/Movies/Tally</span><span class="mono">212 GB free</span></div></div>
+          </div>
+        </div>
+        <figcaption><b>Light appearance + keyboard focus.</b> Popover and Recordings follow the OS appearance. Record has initial focus, so Return records.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 2. CAMERA BUBBLE ═════════════ -->
+  <section class="sec" id="s2">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Camera bubble</h2>
+      <p>The on-screen bubble is a preview; the engine composites the same image into the video. Hover chrome (grip, zoom, blur, hide) is never captured. Four shapes and four sizes (Loom parity), plus a face-centred zoom Loom doesn't have. Sizes are fixed steps so a viewer sees consistent framing across videos.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame sheet" data-shot="02-bubble-shapes-sizes" style="width:1180px">
+          <div class="half-note">Drawn at 50% — labels are real logical points. Defaults: Circle, S.</div>
+          <div><div class="state-lbl">Circle · diameter s</div><div class="sheet-row" style="align-items:flex-end;gap:36px"><div><div class="bubble circle" style="position:relative;width:110px;height:110px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">S 220</div></div><div><div class="bubble circle" style="position:relative;width:140px;height:140px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">M 280</div></div><div><div class="bubble circle" style="position:relative;width:170px;height:170px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">L 340</div></div><div><div class="bubble circle" style="position:relative;width:200px;height:200px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">XL 400</div></div></div></div>
+          <div><div class="state-lbl">Squircle · s × s · superellipse</div><div class="sheet-row" style="align-items:flex-end;gap:36px"><div><div class="bubble rounded" style="position:relative;width:110px;height:110px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">S 220×220</div></div><div><div class="bubble rounded" style="position:relative;width:140px;height:140px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">M 280×280</div></div><div><div class="bubble rounded" style="position:relative;width:170px;height:170px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">L 340×340</div></div><div><div class="bubble rounded" style="position:relative;width:200px;height:200px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">XL 400×400</div></div></div></div>
+          <div><div class="state-lbl">Landscape 16:9 · long side 1.5 s</div><div class="sheet-row" style="align-items:flex-end;gap:36px"><div><div class="bubble rect" style="position:relative;width:165px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">S 330×186</div></div><div><div class="bubble rect" style="position:relative;width:210px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">M 420×236</div></div><div><div class="bubble rect" style="position:relative;width:255px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">L 510×286</div></div><div><div class="bubble rect" style="position:relative;width:300px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">XL 600×338</div></div></div></div>
+          <div><div class="state-lbl">Portrait 3:4 · long side 1.5 s</div><div class="sheet-row" style="align-items:flex-end;gap:36px"><div><div class="bubble portrait" style="position:relative;height:165px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">S 248×330</div></div><div><div class="bubble portrait" style="position:relative;height:210px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">M 316×420</div></div><div><div class="bubble portrait" style="position:relative;height:255px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">L 382×510</div></div><div><div class="bubble portrait" style="position:relative;height:300px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">XL 450×600</div></div></div></div>
+        </div>
+        <figcaption><b>4 shapes × 4 sizes.</b> One base value per step (s = 220 / 280 / 340 / 400 pt). Rectangles use a 1.5 s long side, so they span 330–600 pt like Loom's. The engine scales by the capture's pixel ratio so framing is identical at 1080p and Retina.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame sheet" data-shot="02c-bubble-xl-fit" style="width:1400px">
+          <div class="half-note">Drawn at 50%. Smallest supported display, 24 pt insets.</div>
+          <div class="sheet-row" style="gap:40px;align-items:flex-start"><div><div class="state-lbl">1280×800 · Portrait XL 450×600</div><div class="fit"><span class="mb"></span><span class="dk"></span>
+            <div class="bubble portrait" style="left:12px;bottom:12px;height:300px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div>
+            <span class="vline" style="left:6px;top:12px;height:76px"></span><span class="meas" style="left:16px;top:44px">152 pt free above</span>
+            <span class="mini-bar" style="left:245px;bottom:44px"><i></i>02:14</span>
+            <span class="gap" style="left:237px;width:8px;bottom:55px"></span><span class="meas" style="left:241px;bottom:72px">16 pt gap</span></div></div><div><div class="state-lbl">1280×800 · Landscape XL 600×338</div><div class="fit"><span class="mb"></span><span class="dk"></span>
+            <div class="bubble rect" style="left:12px;bottom:12px;width:300px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div>
+            <span class="mini-bar" style="left:320px;bottom:44px"><i></i>02:14</span></div></div></div>
+        </div>
+        <figcaption><b>XL fits a 1280×800 display.</b> Tallest bubble (portrait XL, 600 pt) + 24 pt inset = 624 of 800 pt, leaving 152 pt under the menu bar. The control bar slides right to keep 16 pt from the bubble instead of covering it.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame sheet" data-shot="02b-bubble-states" style="width:1000px">
+          <div class="sheet-row" style="align-items:flex-start;gap:56px">
+            <div class="cell"><div class="state-lbl">Background · blur</div>
+              <div style="position:relative;width:220px;height:220px">
+                <div class="bubble circle blurred" style="position:relative;width:220px;height:220px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g class="bg"><use href="#face-bg"/></g><use href="#face-person"/></svg></div></div>
+                <span class="bub-tag" style="right:6px;top:14px" aria-label="Background blur"><svg class="i s14"><use href="#blur"/></svg>Blur</span>
+              </div><div class="bub-label">tag visible only in preview</div></div>
+            <div class="cell"><div class="state-lbl">Background · image</div>
+              <div style="position:relative;width:220px;height:220px">
+                <div class="bubble circle blurred" style="position:relative;width:220px;height:220px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g class="bg"><use href="#bg-img"/></g><use href="#face-person"/></svg></div></div>
+                <span class="bub-tag" style="right:6px;top:14px" aria-label="Background image">Image</span>
+              </div><div class="bub-label">person segmented, image behind</div></div>
+            <div class="cell"><div class="state-lbl">Hover</div>
+              <div style="position:relative;width:220px;height:220px">
+                <div class="bubble circle blurred" style="position:relative;width:220px;height:220px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g class="bg"><use href="#face-bg"/></g><use href="#face-person"/></svg></div></div>
+                <span class="bub-grip" aria-label="Drag to move"></span>
+                <div class="bub-hud" style="bottom:-20px">
+                  <button class="ibtn" aria-label="Zoom out"><svg class="i s14"><use href="#minus"/></svg></button>
+                  <span class="zoom"><span class="slider"><span class="fill" style="width:40%"></span><span class="knob" style="left:40%"></span></span>1.4×</span>
+                  <button class="ibtn" aria-label="Zoom in"><svg class="i s14"><use href="#plus"/></svg></button>
+                  <span style="width:1px;height:16px;background:rgba(255,255,255,.1)"></span>
+                  <button class="ibtn" aria-haspopup="menu" aria-label="Background: Blur" style="color:var(--ready)"><svg class="i s14"><use href="#blur"/></svg></button>
+                  <button class="ibtn" aria-label="Hide camera ⌥⇧C"><svg class="i s14"><use href="#eye-off"/></svg></button>
+                </div>
+              </div><div class="bub-label" style="margin-top:34px">grip · zoom · background · hide</div></div>
+          </div>
+          <div class="sheet-row" style="align-items:flex-start;gap:56px">
+            <div class="cell"><div class="state-lbl">Zoom 1.0× → 2.0×, centred on the face</div>
+              <div class="sheet-row" style="gap:20px">
+                <div><div class="bubble circle" style="position:relative;width:110px;height:110px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div><div class="dim-lbl">1.0×</div></div>
+                <div><div class="bubble circle" style="position:relative;width:110px;height:110px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g transform="translate(50 50) scale(1.5) translate(-50 -50)"><use href="#face-bg"/><use href="#face-person"/></g></svg></div></div><div class="dim-lbl">1.5×</div></div>
+                <div><div class="bubble circle" style="position:relative;width:110px;height:110px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g transform="translate(50 50) scale(2.0) translate(-50 -50)"><use href="#face-bg"/><use href="#face-person"/></g></svg></div></div><div class="dim-lbl">2.0×</div></div>
+              </div></div>
+            <div class="cell"><div class="state-lbl">Dragging → snaps to 24 pt inset</div>
+              <div style="position:relative;width:240px;height:190px;border-radius:10px;background:rgba(255,255,255,.03);">
+                <div style="position:absolute;left:24px;top:0;bottom:0;border-left:1px dashed rgba(154,240,127,.6)"></div>
+                <div style="position:absolute;bottom:24px;left:0;right:0;border-top:1px dashed rgba(154,240,127,.6)"></div>
+                <div class="bubble circle" style="left:30px;bottom:30px;width:110px;height:110px;transform:scale(1.04);box-shadow:0 18px 40px rgba(0,0,0,.55),0 0 0 2px var(--ready)"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div>
+              </div><div class="bub-label">lifts 4%, guides at the snap line</div></div>
+            <div class="cell"><div class="state-lbl">Keyboard focus</div>
+              <div style="position:relative;width:110px;height:110px;margin-top:4px">
+                <div class="bubble rounded" style="position:relative;width:110px;height:110px;box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--ready)"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div>
+              </div><div class="bub-label">arrows move · +/− zoom<br>0 resets zoom</div></div>
+          </div>
+        </div>
+        <figcaption><b>Interaction states.</b> Background is None / Blur / Image. Zoom crops around the detected face, never the frame centre. HUD appears after 150 ms hover and hides 600 ms after leave; drag starts after 4 px. (Zoom and drag cells drawn at 50%.)</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 3. COUNTDOWN ═════════════ -->
+  <section class="sec" id="s3">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Countdown</h2>
+      <p>The red frame answers "which screen?" before a single frame is captured. The dim outside the frame is only shown in window mode. The digits, ring and hints are excluded from the video.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame desk" data-shot="03-countdown-display">
+          <div class="menubar"><span class="apple"></span><span>Chrome</span><span class="right"><span class="tray"><span class="traymark"></span></span><span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:32</span></span></div>
+          <div class="desk-icons"><i></i><i></i><i></i></div>
+          <div class="app" style="left:120px;top:60px;width:760px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="bub-wrap" style="left:24px;top:510px"><div class="bubble circle" style="position:relative;width:168px;height:168px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="capture-ring full"><span class="tag"><svg class="i s14"><use href="#monitor"/></svg>Built-in display · 1080p</span></div>
+          <div class="count" role="timer" aria-live="assertive" aria-label="Recording starts in 3">
+            <div class="num"><svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="82" stroke-dasharray="515" stroke-dashoffset="172"/></svg>3</div>
+            <div class="hints"><span><span class="kbd">Space</span>Start now</span><span><span class="kbd">Esc</span>Cancel</span></div>
+          </div>
+        </div>
+        <figcaption><b>Display mode, "3".</b> 4px red frame on the whole display. Ring drains once per second. Space/Return start immediately, Esc returns to idle with nothing written.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame desk" data-shot="03b-countdown-window">
+          <div class="menubar"><span class="apple"></span><span>Chrome</span><span class="right"><span class="tray"><span class="traymark"></span></span><span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:32</span></span></div>
+          <div class="app dark" style="left:640px;top:120px;width:420px;height:300px"><div class="tb"><b></b><b></b><b></b></div><div class="body" style="grid-template-columns:1fr"><div class="main"><div class="h"></div><div class="lines"><i></i><i style="width:80%"></i><i style="width:60%"></i></div></div></div></div>
+          <div class="app" style="left:110px;top:90px;width:700px;height:480px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="capture-ring" style="left:110px;top:90px;width:700px;height:480px;border-radius:10px"><span class="tag"><svg class="i s14"><use href="#window"/></svg>Acme Dashboard — Chrome</span></div>
+          <div class="bub-wrap" style="left:120px;top:428px;z-index:9"><div class="bubble circle" style="position:relative;width:120px;height:120px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div></div>
+          <div class="count" style="left:460px;top:330px"><div class="num"><svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="82" stroke-dasharray="515" stroke-dashoffset="343"/></svg>2</div>
+            <div class="hints"><span><span class="kbd">Space</span>Start now</span><span><span class="kbd">Esc</span>Cancel</span></div></div>
+        </div>
+        <figcaption><b>Window mode, "2".</b> Everything outside the window dims to 45%. The bubble is pulled inside the window's bounds, because only the window is recorded.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 4. CONTROL BAR ═════════════ -->
+  <section class="sec" id="s4">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Control bar</h2>
+      <p>A pill at the bottom-centre of the recorded display, draggable, position remembered. Excluded from capture. Elapsed time first, Stop is the only filled control. Restart and Cancel confirm inline in the bar and pause the recording while the question is shown, so the hesitation never reaches the video. The second press of the same shortcut, or Return, confirms; Esc keeps going.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame desk" data-shot="04-recording-scene">
+          <div class="menubar"><span class="apple"></span><span>Chrome</span><span class="right"><span class="tray" style="width:auto;padding:0 6px;gap:6px;display:flex;background:rgba(255,75,85,.25)"><span class="traymark live"></span><span class="mono" style="font-size:12px">02:14</span></span><span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:34</span></span></div>
+          <div class="app" style="left:120px;top:60px;width:760px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="desk-icons"><i></i><i></i><i></i></div>
+          <div class="bub-wrap" style="left:24px;top:510px"><div class="bubble circle" style="position:relative;width:168px;height:168px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="bar" style="left:50%;transform:translateX(-50%);bottom:76px" role="toolbar" aria-label="Recording controls">
+            <span class="grip" aria-hidden="true"></span>
+            <span class="time" role="timer" aria-label="Elapsed 2 minutes 14 seconds"><span class="dot pulse"></span>02:14</span>
+            <button class="ctl stop" aria-label="Stop and save, Option Shift R"><span class="sq"></span></button>
+            <button class="ctl is-hover" aria-label="Pause, Option Shift P"><svg class="i s20"><use href="#pause"/></svg><span class="tip">Pause<span class="kbd">⌥⇧P</span></span></button>
+            <span class="sep"></span>
+            <button class="ctl" aria-label="Restart"><svg class="i s20"><use href="#restart"/></svg></button>
+            <button class="ctl" aria-label="Cancel"><svg class="i s20"><use href="#trash"/></svg></button>
+            <button class="ctl" aria-label="Camera"><svg class="i s20"><use href="#camera"/></svg></button>
+          </div>
+        </div>
+        <figcaption><b>Recording.</b> Menu-bar icon turns into a live timer (click = Stop). Tooltip with shortcut on hover/focus. Bar sits above the Dock, clear of the bubble.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame sheet" data-shot="04b-control-bar-states" style="width:880px">
+          <div><div class="state-lbl">Recording</div><div style="position:relative;height:46px">
+            <div class="bar" style="left:0;top:0"><span class="grip"></span><span class="time"><span class="dot pulse"></span>02:14</span><button class="ctl stop"><span class="sq"></span></button><button class="ctl"><svg class="i s20"><use href="#pause"/></svg></button><span class="sep"></span><button class="ctl"><svg class="i s20"><use href="#restart"/></svg></button><button class="ctl"><svg class="i s20"><use href="#trash"/></svg></button><button class="ctl"><svg class="i s20"><use href="#camera"/></svg></button></div></div></div>
+          <div><div class="state-lbl">Paused · camera hidden · focus on Resume</div><div style="position:relative;height:46px">
+            <div class="bar" style="left:0;top:0"><span class="grip"></span><span class="time paused"><span class="dot hold"></span>02:14 <span style="font-family:var(--font-ui);font-size:12px">Paused</span></span><button class="ctl stop"><span class="sq"></span></button><button class="ctl is-focus" aria-label="Resume"><svg class="i s20"><use href="#play"/></svg></button><span class="sep"></span><button class="ctl"><svg class="i s20"><use href="#restart"/></svg></button><button class="ctl"><svg class="i s20"><use href="#trash"/></svg></button><button class="ctl off" aria-label="Camera off"><svg class="i s20"><use href="#camera"/></svg></button></div></div></div>
+          <div><div class="state-lbl">Labelled — first 3 recordings, or hold ⌥ over the bar</div><div style="position:relative;height:66px">
+            <div class="bar labelled" style="left:0;top:0"><span class="grip" style="height:auto"></span><span class="time"><span class="dot pulse"></span>00:06</span>
+              <button class="ctl stop"><span class="sq" style="width:12px;height:12px;background:#fff;border-radius:3px;margin:3px 0"></span><span class="kbd">⌥⇧R</span></button>
+              <button class="ctl"><svg class="i s20"><use href="#pause"/></svg><span class="kbd">⌥⇧P</span></button>
+              <button class="ctl"><svg class="i s20"><use href="#restart"/></svg><span class="kbd">⌥⇧Z</span></button>
+              <button class="ctl"><svg class="i s20"><use href="#trash"/></svg><span class="kbd">⌥⇧X</span></button>
+              <button class="ctl"><svg class="i s20"><use href="#camera"/></svg><span class="kbd">⌥⇧C</span></button></div></div></div>
+          <div class="sheet-row" style="gap:24px;align-items:flex-start;flex-direction:column">
+            <div><div class="state-lbl">Confirm restart — recording paused</div><div style="position:relative;height:46px;width:520px">
+              <div class="bar confirm" style="left:0;top:0" role="alertdialog" aria-label="Recording paused. Restart recording?"><span class="q"><span class="dot hold" aria-hidden="true"></span>Restart take?<small>paused at 02:14</small></span><button class="btn quiet">Keep going <span class="kbd">Esc</span></button><button class="btn go">Restart <span class="kbd">⌥⇧Z</span></button></div></div></div>
+            <div><div class="state-lbl">Confirm cancel — recording paused</div><div style="position:relative;height:46px;width:520px">
+              <div class="bar confirm" style="left:0;top:0" role="alertdialog" aria-label="Recording paused. Discard recording?"><span class="q"><span class="dot hold" aria-hidden="true"></span>Discard take?<small>paused · no file saved</small></span><button class="btn quiet">Keep going <span class="kbd">Esc</span></button><button class="btn go">Discard <span class="kbd">⌥⇧X</span></button></div></div></div>
+          </div>
+        </div>
+        <figcaption><b>States.</b> Confirmations replace the bar's contents in place (no modal). The recording pauses while the question is shown; Keep going resumes it, so the pause is invisible in the video. No timeout: nothing is lost by waiting. Pressing the same shortcut twice is the fast path.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 5. AFTER STOP ═════════════ -->
+  <section class="sec" id="s5">
+    <div class="sec-head"><span class="sec-num">05</span><h2>After stop</h2>
+      <p>The file is already on disk when this appears. The name field is focused with the base name selected: type to rename, Return to commit, Esc or × to dismiss. Stays until dismissed — no auto-hide.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame desk" data-shot="05-saved-popup">
+          <div class="menubar"><span class="apple"></span><span>Chrome</span><span class="right"><span class="tray"><span class="traymark"></span></span><span class="mb-icon"></span><span class="mb-icon"></span><span>Tue 21 Oct 14:36</span></span></div>
+          <div class="desk-icons"><i></i><i></i><i></i></div>
+          <div class="app" style="left:120px;top:60px;width:760px;height:500px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="saved" style="right:16px;bottom:80px" role="dialog" aria-label="Recording saved"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+            <div class="top">
+              <div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">04:12</span></div>
+              <div>
+                <div class="status"><svg class="i s14"><use href="#check"/></svg>Saved</div>
+                <label class="sr" for="nm">File name</label>
+                <div class="name-field" id="nm"><span class="sel">2026-10-21 14.32 Built-in</span><span class="caret"></span><span class="ext">.mp4</span></div>
+                <div class="meta">1080p · 30 fps · 146 MB · ~/Movies/Tally</div>
+              </div>
+            </div>
+            <div class="acts">
+              <button class="btn sm"><svg class="i s14"><use href="#reveal"/></svg>Show in Finder</button>
+              <button class="btn sm"><svg class="i s14"><use href="#open"/></svg>Open</button>
+              <span class="spacer"></span>
+              <button class="btn sm danger" aria-label="Move to Trash"><svg class="i s14"><use href="#trash"/></svg>Delete</button>
+            </div>
+            <div class="hint"><span><span class="kbd">↵</span>Rename</span><span><span class="kbd">⌘↵</span>Open</span><span><span class="kbd">⌘R</span>Show in Finder</span><span><span class="kbd">Esc</span>Done</span></div>
+          </div>
+        </div>
+        <figcaption><b>Saved, rename focused.</b> Bottom-right, away from where the control bar was. The extension is outside the selection so typing never breaks it.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame sheet" data-shot="05b-saved-states" style="width:880px">
+          <div class="sheet-row" style="align-items:flex-start;gap:32px">
+            <div class="cell" style="width:372px"><div class="state-lbl">Rename conflict</div><div style="position:relative;height:170px">
+              <div class="saved" style="left:0;top:0"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+                <div class="top"><div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">04:12</span></div>
+                  <div><div class="status"><svg class="i s14"><use href="#check"/></svg>Saved</div>
+                    <div class="name-field err">Onboarding demo<span class="caret"></span><span class="ext">.mp4</span></div>
+                    <div class="errmsg" role="alert">A file with this name exists. Return saves as “Onboarding demo 2”.</div></div></div>
+                <div class="acts"><button class="btn sm"><svg class="i s14"><use href="#reveal"/></svg>Show in Finder</button><button class="btn sm"><svg class="i s14"><use href="#open"/></svg>Open</button><span class="spacer"></span><button class="btn sm danger"><svg class="i s14"><use href="#trash"/></svg>Delete</button></div>
+              </div></div></div>
+            <div class="cell" style="width:372px"><div class="state-lbl">Deleted — Undo until dismissed</div><div style="position:relative;height:170px">
+              <div class="saved undo" style="left:0;top:0" role="status" aria-live="polite">
+                <div class="msg"><svg class="i"><use href="#trash"/></svg><div>Moved to Trash<small>Onboarding demo.mp4</small></div></div>
+                <button class="btn sm"><svg class="i s14"><use href="#undo"/></svg>Undo <span class="kbd">⌘Z</span></button>
+                <button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+                              </div></div></div>
+          </div>
+          <div class="sheet-row" style="align-items:flex-start;gap:32px">
+            <div class="cell" style="width:372px"><div class="state-lbl">Renamed (committed)</div><div style="position:relative;height:150px">
+              <div class="saved" style="left:0;top:0"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+                <div class="top"><div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">04:12</span></div>
+                  <div><div class="status"><svg class="i s14"><use href="#check"/></svg>Renamed</div>
+                    <div class="name-field plain">Onboarding demo v2<span class="ext">.mp4</span></div>
+                    <div class="meta">1080p · 30 fps · 146 MB · ~/Movies/Tally</div></div></div>
+                <div class="acts"><button class="btn sm is-focus"><svg class="i s14"><use href="#reveal"/></svg>Show in Finder</button><button class="btn sm"><svg class="i s14"><use href="#open"/></svg>Open</button><span class="spacer"></span><button class="btn sm danger"><svg class="i s14"><use href="#trash"/></svg>Delete</button></div>
+              </div></div></div>
+            <div class="cell" style="width:372px"><div class="state-lbl">Finalizing (only if remux &gt; 300 ms)</div><div style="position:relative;height:150px">
+              <div class="saved" style="left:0;top:0"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+                <div class="top"><div class="vthumb"><div class="thumb"></div><span class="dur">58:40</span></div>
+                  <div><div class="status" style="color:var(--fg-2)"><span class="spin"></span>Finishing file…</div>
+                    <div class="name-field"><span class="sel">2026-10-21 14.32 Built-in</span><span class="caret"></span><span class="ext">.mp4</span></div>
+                    <div class="meta">Rename now — applied when ready</div></div></div>
+                <div class="acts"><button class="btn sm" disabled><svg class="i s14"><use href="#reveal"/></svg>Show in Finder</button><button class="btn sm" disabled><svg class="i s14"><use href="#open"/></svg>Open</button><span class="spacer"></span><button class="btn sm danger"><svg class="i s14"><use href="#trash"/></svg>Delete</button></div>
+              </div></div></div>
+          </div>
+        </div>
+        <figcaption><b>States.</b> Conflict resolves itself (auto-suffix) rather than blocking. Delete moves to Trash, so Undo is a real restore and the OS Trash is a second safety net.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 6. RECORDINGS ═════════════ -->
+  <section class="sec" id="s6">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Recordings window</h2>
+      <p>A list, grouped by day, because names and dates are what you scan. Row actions appear on hover or selection. Return renames, Space opens Quick Look (Mac), ⌘⌫ deletes with undo.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame" data-shot="06-recordings-list" style="width:820px;height:600px;background:#2a3238">
+          <div class="wnd" style="inset:24px">
+            <div class="wnd-bar"><span class="lights"><b></b><b></b><b></b></span><span class="title">Recordings</span>
+              <span class="acts"><span class="search"><svg class="i s14"><use href="#search"/></svg>Search</span><button class="btn sm primary"><span class="dot" style="background:var(--live)"></span>Record</button></span></div>
+            <div class="lib" role="listbox" aria-label="Recordings">
+              <div class="lib-group">Today</div>
+              <div class="lib-row" aria-selected="true" role="option"><div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">04:12</span></div>
+                <div><div class="input is-focus" style="display:flex;align-items:center">Onboarding demo v2<span class="caret" style="width:1.5px;height:16px;background:var(--fg-1);margin-left:1px"></span><span style="color:var(--fg-3)">.mp4</span></div><div class="m">14:32 · 1080p · 146 MB</div></div>
+                <div class="ra"><button class="ibtn" aria-label="Open"><svg class="i"><use href="#open"/></svg></button><button class="ibtn" aria-label="Show in Finder"><svg class="i"><use href="#reveal"/></svg></button><button class="ibtn" aria-label="Delete"><svg class="i"><use href="#trash"/></svg></button></div></div>
+              <div class="lib-row is-hover" role="option"><div class="vthumb"><div class="thumb t4"></div><span class="dur">01:47</span></div>
+                <div><b>API keys walkthrough</b><div class="m">11:05 · Native 60 fps · 212 MB</div></div>
+                <div class="ra"><button class="ibtn"><svg class="i"><use href="#pencil"/></svg></button><button class="ibtn"><svg class="i"><use href="#open"/></svg></button><button class="ibtn"><svg class="i"><use href="#reveal"/></svg></button><button class="ibtn"><svg class="i"><use href="#trash"/></svg></button></div></div>
+              <div class="lib-group">Yesterday</div>
+              <div class="lib-row" role="option"><div class="vthumb"><div class="thumb t3"></div><span class="cam"></span><span class="dur">06:30</span></div><div><b>Investor update — pricing page</b><div class="m">17:21 · 1080p · 231 MB</div></div><div class="ra"></div></div>
+              <div class="lib-row" role="option"><div class="vthumb"><div class="thumb t5"></div><span class="cam"></span><span class="dur">00:52</span></div><div><b>2026-10-20 09.14 Built-in</b><div class="m">09:14 · 1080p · 31 MB</div></div><div class="ra"></div></div>
+            </div>
+            <div class="lib-foot"><svg class="i s14"><use href="#folder"/></svg><span class="path">~/Movies/Tally</span><button class="btn sm quiet">Change…</button><span class="sp"></span><span class="mono">4 recordings · 620 MB</span></div>
+          </div>
+        </div>
+        <figcaption><b>Populated.</b> Selected row is mid-rename (Return). Hovered row shows actions. Rename edits the real file name; the list re-reads the folder, so files renamed in Finder show up too.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame" data-shot="06b-recordings-empty" style="width:820px;height:600px;background:#2a3238">
+          <div class="wnd" style="inset:24px">
+            <div class="wnd-bar"><span class="lights"><b></b><b></b><b></b></span><span class="title">Recordings</span></div>
+            <div class="empty"><div class="inner">
+              <span class="mark xl idle" aria-hidden="true"></span>
+              <h3>No recordings yet</h3>
+              <p>Videos you record are saved as MP4 files in <span class="mono" style="color:var(--fg-1)">~/Movies/Tally</span>. They never leave this Mac.</p>
+              <button class="btn primary" style="height:40px;padding:0 18px"><span class="dot"></span>Record your screen</button>
+              <div class="keys">or press <span class="kbd">⌥⇧R</span> from anywhere</div>
+            </div></div>
+            <div class="lib-foot"><svg class="i s14"><use href="#folder"/></svg><span class="path">~/Movies/Tally</span><button class="btn sm quiet">Change…</button></div>
+          </div>
+        </div>
+        <figcaption><b>Empty.</b> Says where files go and that they stay local, then offers the one useful action plus its shortcut.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 7. PERMISSIONS ═════════════ -->
+  <section class="sec" id="s7">
+    <div class="sec-head"><span class="sec-num">07</span><h2>First run &amp; permissions</h2>
+      <p>Only Screen Recording is asked for up front. Camera is asked inline the first time the camera switch is turned on. No microphone, no Accessibility. Because builds are unsigned, the install guidance ships in the .dmg window and the Windows installer page.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame" data-shot="07-install-guidance" style="width:820px;height:560px;background:#2a3238">
+          <div class="wnd" style="inset:24px">
+            <div class="wnd-bar"><span class="lights"><b></b><b></b><b></b></span><span class="title">Install Tally</span></div>
+            <div class="onb" style="padding-top:12px">
+              <div><h3>Tally isn’t signed by Apple or Microsoft</h3><p class="lead">It’s safe to open. Your OS will warn you the first time, once. Here’s exactly what to click.</p></div>
+              <div class="two">
+                <div><div class="os-label">macOS <small>15 and later</small></div>
+                  <ol class="ol"><li>Drag Tally to Applications and open it. macOS blocks it.</li><li>Open <span class="path-crumbs" style="color:var(--fg-1)">System Settings <i>›</i> Privacy &amp; Security</span>.</li><li>Scroll to Security and click <b style="color:var(--fg-1)">Open Anyway</b>, then confirm.</li></ol>
+                  <div class="fake-os"><div class="muted">Security</div><div class="row"><span>“Tally” was blocked to protect your Mac.</span><span class="btnos hl">Open Anyway</span></div></div></div>
+                <div><div class="os-label">Windows <small>10 2004+ / 11</small></div>
+                  <ol class="ol"><li>Run the installer. SmartScreen says “Windows protected your PC”.</li><li>Click <b style="color:var(--fg-1)">More info</b>.</li><li>Click <b style="color:var(--fg-1)">Run anyway</b>.</li></ol>
+                  <div class="fake-win"><h5>Windows protected your PC</h5><span><u>More info</u> · App: Tally-Setup.exe</span><div class="row"><span class="hl">Run anyway</span><span>Don’t run</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Unsigned install guidance.</b> Background of the .dmg window on Mac and the first page of the NSIS installer on Windows. Uses the OS's own words so users can match them.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame" data-shot="07b-screen-permission" style="width:620px;height:460px;background:#2a3238">
+          <div class="wnd" style="inset:24px">
+            <div class="wnd-bar"><span class="lights"><b></b><b></b><b></b></span></div>
+            <div class="onb" style="padding-top:4px">
+              <div><span class="mark lg idle"></span><h3 style="margin-top:16px">Allow screen recording</h3><p class="lead">macOS needs your OK before Tally can see your screen. Recordings stay on this Mac.</p></div>
+              <div class="steps">
+                <div class="step cur"><span class="n">1</span><div><b>Open Screen &amp; System Audio Recording</b><small>Turn on Tally in the list</small></div><span class="state"><span class="spin"></span>Waiting…</span></div>
+                <div class="step"><span class="n">2</span><div><b>Quit &amp; reopen Tally</b><small>macOS applies the change on relaunch</small></div><span class="state"></span></div>
+              </div>
+              <div class="onb-foot"><small><svg class="i s14"><use href="#lock"/></svg>No microphone. Camera is asked later, only if you use it.</small><span class="sp"></span><button class="btn primary">Open System Settings<svg class="i s14"><use href="#arrow-r"/></svg></button></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Screen Recording, waiting.</b> The button deep-links to the exact pane. Status polls every second and updates without user action.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame" data-shot="07c-screen-permission-granted" style="width:620px;height:460px;background:#2a3238">
+          <div class="wnd" style="inset:24px">
+            <div class="wnd-bar"><span class="lights"><b></b><b></b><b></b></span></div>
+            <div class="onb" style="padding-top:4px">
+              <div><span class="mark lg idle"></span><h3 style="margin-top:16px">Almost there</h3><p class="lead">Permission is on. Reopen Tally to start recording. Your settings are kept.</p></div>
+              <div class="steps">
+                <div class="step done"><span class="n"><svg class="i s14"><use href="#check"/></svg></span><div><b>Screen recording allowed</b></div><span class="state ok"><svg class="i s14"><use href="#check"/></svg>Done</span></div>
+                <div class="step cur"><span class="n">2</span><div><b>Quit &amp; reopen Tally</b><small>Takes about two seconds</small></div><span class="state"></span></div>
+              </div>
+              <div class="onb-foot"><small><span class="kbd">⌥⇧R</span> will start a recording from anywhere</small><span class="sp"></span><button class="btn primary is-focus">Reopen Tally</button></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Granted → relaunch.</b> Primary action is focused; Return relaunches.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad" data-shot="07d-camera-permission" style="width:780px;height:360px">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="opts" style="margin-top:8px">
+              <div class="opt open"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt-detail" style="padding-left:6px">
+                <div class="banner info" style="margin:0"><svg class="i"><use href="#camera"/></svg><b>Allow camera access</b><p>macOS will ask once. Tally only uses the camera while the bubble is on.</p><div class="acts"><button class="btn sm primary">Continue</button><button class="btn sm quiet">Not now</button></div></div>
+              </div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button></div>
+          </div>
+          <div class="pop" style="left:400px;top:32px">
+            <div class="opts" style="margin-top:8px">
+              <div class="opt open"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt-detail" style="padding-left:6px">
+                <div class="banner bad" style="margin:0"><svg class="i"><use href="#lock"/></svg><b>Camera is blocked</b><p>Turn on Tally in Privacy &amp; Security › Camera, then try again.</p><div class="acts"><button class="btn sm">Open Settings</button></div></div>
+              </div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record screen only<span class="kbd on-ready">⌥⇧R</span></button></div>
+          </div>
+        </div>
+        <figcaption><b>Camera: first use (left) and denied (right).</b> A one-line primer before the OS prompt. Denied never blocks recording: the button says "screen only".</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 8. ERRORS ═════════════ -->
+  <section class="sec" id="s8">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Errors</h2>
+      <p>Rule: never lose footage, say what happened in one line, offer the next action. Mid-recording problems surface in the control bar (not captured), not in system dialogs.</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame pad" data-shot="08-error-permission-denied" style="width:404px;height:520px">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="pop-head"><span class="mark idle"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="banner bad" role="alert"><svg class="i"><use href="#lock"/></svg><b>Screen recording is off for Tally</b><p>macOS turned it off or it was never allowed. Turn it on, then reopen Tally.</p><div class="acts"><button class="btn sm">Open System Settings</button><button class="btn sm quiet">Reset permission…</button></div></div>
+            <div class="src"><div class="seg full src-tabs"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div></div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">Circle M</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec" disabled><span class="rdot"></span>Record<span class="kbd">⌥⇧R</span></button></div>
+          </div>
+        </div>
+        <figcaption><b>Permission denied / revoked.</b> Checked every time the popover opens. Record disabled with the reason directly above it. "Reset permission" runs the tccutil reset for stuck grants.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame desk sm" data-shot="08b-error-source-closed">
+          <div class="menubar"><span class="apple"></span><span>Finder</span><span class="right"><span class="tray" style="width:auto;padding:0 6px;gap:6px;display:flex;background:rgba(255,201,74,.25)"><span class="traymark"></span><span class="mono" style="font-size:12px">03:41</span></span><span>14:41</span></span></div>
+          <div class="desk-icons"><i></i><i></i><i></i></div>
+          <div class="bar warn" style="left:50%;transform:translateX(-50%);bottom:40px" role="alert">
+            <span class="note"><svg class="i"><use href="#warn"/></svg>Window closed<small>· paused at 03:41</small></span>
+            <button class="btn" style="border-radius:999px;height:36px">Switch to display</button>
+            <button class="btn primary" style="border-radius:999px;height:36px;background:var(--live-fill);color:#fff"><span class="sq" style="width:10px;height:10px;background:#fff;border-radius:2px"></span>Stop &amp; save</button>
+          </div>
+        </div>
+        <figcaption><b>Source closed mid-recording.</b> Auto-pauses (no black frames), keeps everything so far. Continue on the display, or stop and save. Same pattern for a display unplugged.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame pad" data-shot="08c-error-disk" style="width:820px;height:300px">
+          <div class="pop" style="left:32px;top:32px">
+            <div class="banner" role="status"><svg class="i"><use href="#disk"/></svg><b>Low disk space</b><p>2.1 GB free — about 18 min at 1080p30. Recording stops safely before the disk fills.</p></div>
+            <div class="opts"><div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div></div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">⌥⇧R</span></button><div class="rec-meta"><span>Saves to ~/Movies/Tally</span><span class="mono" style="color:var(--hold)">2.1 GB free</span></div></div>
+          </div>
+          <div class="saved alert" style="left:420px;top:32px" role="alertdialog" aria-label="Recording stopped, disk full"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+            <div class="top"><div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">17:52</span></div>
+              <div><div class="status"><svg class="i s14"><use href="#disk"/></svg>Stopped — disk almost full</div>
+                <div class="name-field"><span class="sel">2026-10-21 14.32 Built-in</span><span class="caret"></span><span class="ext">.mp4</span></div>
+                <div class="meta">All 17:52 saved · 500 MB left</div></div></div>
+            <div class="acts"><button class="btn sm"><svg class="i s14"><use href="#reveal"/></svg>Show in Finder</button><button class="btn sm"><svg class="i s14"><use href="#open"/></svg>Open</button><span class="spacer"></span><button class="btn sm quiet">Free up space…</button></div>
+          </div>
+        </div>
+        <figcaption><b>Disk: warning before (left), safe auto-stop during (right).</b> Warn under 5 GB, auto-stop at 500 MB left, block Start under 1 GB. The bar flashes "Low disk — 2 min left" a minute before auto-stop.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="frame desk sm" data-shot="08d-error-camera-unplugged">
+          <div class="menubar"><span class="apple"></span><span>Chrome</span><span class="right"><span class="tray" style="width:auto;padding:0 6px;gap:6px;display:flex;background:rgba(255,75,85,.25)"><span class="traymark live"></span><span class="mono" style="font-size:12px">05:03</span></span><span>14:43</span></span></div>
+          <div class="app" style="left:70px;top:50px;width:560px;height:330px"><div class="tb"><b></b><b></b><b></b><span class="url"></span></div><div class="body"><div class="side"><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div></div></div></div>
+          <div class="bubble circle lost" style="left:24px;top:300px;width:120px;height:120px" role="img" aria-label="Camera disconnected"><div class="inner"><svg class="i s20"><use href="#unplug"/></svg>Camera<br>disconnected</div></div>
+          <div class="bar-toast" style="left:50%;transform:translateX(-50%);bottom:94px" role="status"><svg class="i s14"><use href="#unplug"/></svg><span><b>FaceTime HD disconnected.</b> Screen is still recording. Reconnect to bring the camera back.</span></div>
+          <div class="bar" style="left:50%;transform:translateX(-50%);bottom:34px"><span class="grip"></span><span class="time"><span class="dot pulse"></span>05:03</span><button class="ctl stop"><span class="sq"></span></button><button class="ctl"><svg class="i s20"><use href="#pause"/></svg></button><span class="sep"></span><button class="ctl"><svg class="i s20"><use href="#restart"/></svg></button><button class="ctl"><svg class="i s20"><use href="#trash"/></svg></button><button class="ctl off"><svg class="i s20"><use href="#camera"/></svg></button></div>
+        </div>
+        <figcaption><b>Camera unplugged.</b> Recording continues screen-only (the video simply loses the bubble). The preview bubble shows why; it resumes automatically if the same device returns.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════════ 11. WINDOWS ═════════════ -->
+  <section class="sec" id="s11">
+    <div class="sec-head"><span class="sec-num">11</span><h2>Windows differences</h2>
+      <p>Same components. The tray popover opens upward from the notification area, shortcuts read Alt+Shift, "Finder" becomes "File Explorer", window controls move right, no popover arrow. Corner radii follow Windows 11 (8px windows).</p></div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame desk win" data-shot="11-windows-tray-popover">
+          <div class="app" style="left:60px;top:40px;width:620px;height:440px"><div class="tb"><span class="url" style="margin-left:0"></span></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i></div><div class="main"><div class="h"></div><div class="row"><i></i><i></i><i></i></div><div class="chart"></div></div></div></div>
+          <div class="bub-wrap" style="left:80px;top:440px"><div class="bubble rounded" style="position:relative;width:168px;height:168px"><div class="face"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><use href="#face-bg"/><use href="#face-person"/></svg></div></div></div>
+          <div class="pop" style="right:12px;bottom:56px;border-radius:8px">
+            <div class="pop-head"><span class="mark idle"></span><span class="name">Tally</span><span class="acts"><button class="ibtn"><svg class="i"><use href="#library"/></svg></button><button class="ibtn"><svg class="i"><use href="#gear"/></svg></button></span></div>
+            <div class="src"><div class="seg full src-tabs"><button aria-pressed="true"><svg class="i s14"><use href="#monitor"/></svg>Display</button><button aria-pressed="false"><svg class="i s14"><use href="#window"/></svg>Window</button></div>
+              <div class="src-hero"><button class="src-tile" aria-pressed="true"><div class="thumb"></div><div class="cap">Display 1 <span>2560×1440</span></div></button><button class="src-tile" aria-pressed="false"><div class="thumb t2"></div><div class="cap">Display 2 <span>1920×1080</span></div></button></div></div>
+            <div class="opts">
+              <div class="opt"><svg class="i"><use href="#camera"/></svg><span class="lbl"><b>Camera</b></span><span class="val">Logitech C920 · Rounded M</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt"><svg class="i"><use href="#clean"/></svg><span class="lbl"><b>Clean desktop</b></span><span class="val">Graphite</span><span class="switch" role="switch" aria-checked="true"></span></div>
+              <div class="opt"><svg class="i"><use href="#speaker-off"/></svg><span class="lbl"><b>System audio</b></span><span class="switch" role="switch" aria-checked="false"></span></div>
+              <div class="opt"><svg class="i"><use href="#quality"/></svg><span class="lbl"><b>Quality</b></span><span class="val">1080p · 30 fps</span><svg class="i s14 chev"><use href="#chev-r"/></svg></div>
+            </div>
+            <div class="rec-zone"><button class="rec"><span class="rdot"></span>Record<span class="kbd on-ready">Alt+Shift+R</span></button><div class="rec-meta"><span>Saves to Videos\Tally</span><span class="mono">412 GB free</span></div></div>
+          </div>
+          <div class="taskbar"><i></i><i></i><i></i><i></i><i></i><span class="tb-right"><span class="tray on"><span class="traymark"></span></span><span>14:32<br>21/10/2026</span></span></div>
+        </div>
+        <figcaption><b>Windows tray popover.</b> Anchored above the tray icon, 8px radius, no arrow. Keycaps spell out Alt+Shift+R.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame desk win sm" data-shot="11b-windows-bar-saved">
+          <div class="bar" style="left:40px;bottom:120px"><span class="grip"></span><span class="time"><span class="dot pulse"></span>00:48</span><button class="ctl stop"><span class="sq"></span></button><button class="ctl is-hover"><svg class="i s20"><use href="#pause"/></svg><span class="tip">Pause<span class="kbd">Alt+Shift+P</span></span></button><span class="sep"></span><button class="ctl"><svg class="i s20"><use href="#restart"/></svg></button><button class="ctl"><svg class="i s20"><use href="#trash"/></svg></button><button class="ctl"><svg class="i s20"><use href="#camera"/></svg></button></div>
+          <div class="saved" style="right:12px;bottom:56px;border-radius:8px;width:360px"><button class="ibtn x" aria-label="Dismiss, Esc"><svg class="i s14"><use href="#x"/></svg></button>
+            <div class="top"><div class="vthumb"><div class="thumb"></div><span class="cam"></span><span class="dur">04:12</span></div>
+              <div><div class="status"><svg class="i s14"><use href="#check"/></svg>Saved</div><div class="name-field"><span class="sel">2026-10-21 14.32 Display 1</span><span class="caret"></span><span class="ext">.mp4</span></div><div class="meta">1080p · 146 MB · Videos\Tally</div></div></div>
+            <div class="acts"><button class="btn sm"><svg class="i s14"><use href="#reveal"/></svg>Show in Explorer</button><button class="btn sm"><svg class="i s14"><use href="#open"/></svg>Open</button><span class="spacer"></span><button class="btn sm danger"><svg class="i s14"><use href="#trash"/></svg>Delete</button></div>
+          </div>
+          <div class="taskbar"><i></i><i></i><i></i><i></i><span class="tb-right"><span class="tray"><span class="traymark"></span></span><span>14:36<br>21/10/2026</span></span></div>
+        </div>
+        <figcaption><b>Windows bar + saved popup.</b> (Shown together for comparison; they never coexist.) "Show in Explorer"; Delete goes to the Recycle Bin; Undo is Ctrl+Z.</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>

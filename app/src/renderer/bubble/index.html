@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Tally camera</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<link rel="stylesheet" href="./bubble.css" />
+<body class="overlay">
+  <div id="wrap" class="wrap" hidden>
+    <div id="shadow" class="shadow">
+      <div id="cam" class="cam" role="img" tabindex="-1">
+        <canvas id="c"></canvas>
+        <div id="lost" class="lost" hidden><div class="inner"><span id="lostIcon"></span><span id="lostText">Camera disconnected</span></div></div>
+      </div>
+    </div>
+    <div class="bub-tag" id="bgtag" hidden></div>
+    <div class="sizeh" id="sizeh" role="button" aria-label="Resize camera bubble" title="Drag to resize (S / M / L / XL)"></div>
+    <div class="sizechip" id="sizechip" aria-live="polite"></div>
+    <div class="bub-grip" id="grip" aria-hidden="true"></div>
+    <div class="bub-hud" id="hud" role="toolbar" aria-label="Camera controls">
+      <button class="ibtn" data-z="-1" aria-label="Zoom out" tabindex="-1"></button>
+      <div class="zoom"><input id="zoom" class="range" type="range" min="1" max="2" step="0.1" value="1" tabindex="-1" aria-label="Zoom"><span id="zv">1.0×</span></div>
+      <button class="ibtn" data-z="1" aria-label="Zoom in" tabindex="-1"></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="ibtn" id="bgbtn" aria-label="Background" title="Background (B)" tabindex="-1"></button>
+      <button class="ibtn" id="hide" aria-label="Hide camera" tabindex="-1"></button>
+    </div>
+  </div>
+  <script type="module" src="./bubble.js"></script>
+</body>
+</html>

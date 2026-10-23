@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Tally, hardened runtime. Electron's V8 needs JIT and unsigned executable memory;
+     ad-hoc signing needs library validation off (Electron's frameworks carry another
+     Team ID). Camera for the bubble. Audio input for the optional microphone (off by
+     default; used only when the user turns it on).
+     Screen Recording and System Audio Recording are TCC grants, not entitlements. -->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-jit</key><true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+  <key>com.apple.security.cs.disable-library-validation</key><true/>
+  <key>com.apple.security.device.camera</key><true/>
+  <key>com.apple.security.device.audio-input</key><true/>
+</dict>
+</plist>

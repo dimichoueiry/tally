@@ -1,0 +1,139 @@
+<!doctype html>
+<meta charset="utf-8" />
+<!-- Single-window mode: window capture + camera (optionally background-blurred) composited in a canvas,
+     then canvas.captureStream() -> MediaRecorder. Reports per-frame timing. -->
+<canvas id="c"></canvas>
+<script type="module">
+  import { FilesetResolver, ImageSegmenter } from './node_modules/@mediapipe/tasks-vision/vision_bundle.mjs';
+
+  const pct = (a, p) => (a.length ? a.slice().sort((x, y) => x - y)[Math.floor((a.length - 1) * p)] : null);
+  const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const video = (stream) => {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.srcObject = stream;
+    return v.play().then(() => v);
+  };
+
+  window.spike.onStart(async ({ seconds, delegate, blur }) => {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false });
+      const camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      const [sv, cv] = await Promise.all([video(screenStream), video(camStream)]);
+
+      let segmenter = null;
+      let loadMs = 0;
+      if (blur) {
+        const t = performance.now();
+        const fileset = await FilesetResolver.forVisionTasks('./node_modules/@mediapipe/tasks-vision/wasm');
+        segmenter = await ImageSegmenter.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: './models/selfie_segmenter.tflite', delegate },
+          runningMode: 'VIDEO',
+          outputConfidenceMasks: true,
+          outputCategoryMask: false,
+        });
+        loadMs = performance.now() - t;
+      }
+
+      const c = document.getElementById('c');
+      c.width = sv.videoWidth;
+      c.height = sv.videoHeight;
+      const ctx = c.getContext('2d');
+      const D = Math.round(c.height * 0.28); // bubble diameter
+      const cam = new OffscreenCanvas(D, D), camCtx = cam.getContext('2d');
+      const person = new OffscreenCanvas(D, D), personCtx = person.getContext('2d');
+      let maskCanvas = null, maskCtx = null, maskImg = null;
+
+      // draw camera cover-cropped to a DxD square, mirrored, zoom 1.15
+      const drawCam = (g, zoom = 1.15) => {
+        const s = Math.min(cv.videoWidth, cv.videoHeight) / zoom;
+        g.save();
+        g.translate(D, 0);
+        g.scale(-1, 1);
+        g.drawImage(cv, (cv.videoWidth - s) / 2, (cv.videoHeight - s) / 2, s, s, 0, 0, D, D);
+        g.restore();
+      };
+
+      const segMs = [], frameMs = [];
+      let frames = 0, snapshot = null;
+      const draw = () => {
+        const t0 = performance.now();
+        ctx.drawImage(sv, 0, 0, c.width, c.height);
+        if (segmenter) {
+          const ts = performance.now();
+          const res = segmenter.segmentForVideo(cv, ts);
+          const mask = res.confidenceMasks[0];
+          const data = mask.getAsFloat32Array();
+          if (!maskCanvas) {
+            maskCanvas = new OffscreenCanvas(mask.width, mask.height);
+            maskCtx = maskCanvas.getContext('2d');
+            maskImg = maskCtx.createImageData(mask.width, mask.height);
+          }
+          for (let i = 0; i < data.length; i++) maskImg.data[i * 4 + 3] = data[i] * 255;
+          res.close();
+          maskCtx.putImageData(maskImg, 0, 0);
+          segMs.push(performance.now() - ts);
+          // blurred background, then person cut out with the mask on top
+          camCtx.filter = 'blur(10px)';
+          drawCam(camCtx);
+          camCtx.filter = 'none';
+          personCtx.globalCompositeOperation = 'source-over';
+          personCtx.clearRect(0, 0, D, D);
+          drawCam(personCtx);
+          personCtx.globalCompositeOperation = 'destination-in';
+          // mask is in camera space; apply the same crop+mirror transform
+          const s = Math.min(mask.width, mask.height) / 1.15;
+          personCtx.save();
+          personCtx.translate(D, 0);
+          personCtx.scale(-1, 1);
+          personCtx.drawImage(maskCanvas, (mask.width - s) / 2, (mask.height - s) / 2, s, s, 0, 0, D, D);
+          personCtx.restore();
+          camCtx.drawImage(person, 0, 0);
+        } else {
+          drawCam(camCtx);
+        }
+        // circle bubble, bottom-left
+        const x = Math.round(c.height * 0.04), y = c.height - D - x;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + D / 2, y + D / 2, D / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(cam, x, y);
+        ctx.restore();
+        frameMs.push(performance.now() - t0);
+        frames++;
+      };
+
+      const out = c.captureStream(30);
+      const mimeType = 'video/mp4;codecs=avc1.640033';
+      const chunks = [];
+      const rec = new MediaRecorder(out, { mimeType, videoBitsPerSecond: 8_000_000 });
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      // setInterval, not rAF: rAF does not run in a hidden window
+      const timer = setInterval(draw, 1000 / 30);
+      rec.start(1000);
+      const t0 = performance.now();
+      setTimeout(() => (snapshot = c.toDataURL('image/jpeg', 0.7)), (seconds * 1000) / 2);
+      setTimeout(() => rec.stop(), seconds * 1000);
+      rec.onstop = async () => {
+        clearInterval(timer);
+        screenStream.getTracks().forEach((t) => t.stop());
+        camStream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks, { type: mimeType });
+        window.spike.done({
+          ext: 'mp4',
+          bytes: new Uint8Array(await blob.arrayBuffer()),
+          snapshot,
+          meta: {
+            canvas: [c.width, c.height], bubble: D, blur, delegate: blur ? delegate : null,
+            modelLoadMs: Math.round(loadMs), frames, wallMs: Math.round(performance.now() - t0),
+            segMsAvg: avg(segMs)?.toFixed(2), segMsP95: pct(segMs, 0.95)?.toFixed(2),
+            frameMsAvg: avg(frameMs)?.toFixed(2), frameMsP95: pct(frameMs, 0.95)?.toFixed(2),
+          },
+        });
+      };
+    } catch (e) {
+      window.spike.done({ error: `${e.name}: ${e.message}\n${e.stack}` });
+    }
+  });
+</script>

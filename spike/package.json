@@ -1,0 +1,17 @@
+{
+  "name": "loomclone-spike",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Throwaway capture spike. Not the app.",
+  "main": "main.js",
+  "scripts": {
+    "list": "electron . list",
+    "record": "electron . record",
+    "bubble": "electron . bubble",
+    "protect": "electron . protect"
+  },
+  "devDependencies": {
+    "@mediapipe/tasks-vision": "^1.1.1",
+    "electron": "45.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'" />
+<title>Tally window picker</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<link rel="stylesheet" href="../shared/glass.css" />
+<link rel="stylesheet" href="./picker.css" />
+<body class="overlay">
+  <div id="root" hidden>
+    <div id="dim" class="dim"></div>
+    <div id="ring" class="ring" hidden></div>
+    <div id="chip" class="wchip" hidden></div>
+  </div>
+  <div class="sr" aria-live="polite" id="announce"></div>
+  <script type="module" src="./picker.js"></script>
+</body>
+</html>

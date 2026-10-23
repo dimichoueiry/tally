@@ -1,0 +1,80 @@
+/* Setup v2 bubble tray (design/SETUP_V2.md §11 2-row layout, mockups 14 / 03b / 11).
+   Glass tokens: shared/glass.css. The window covers the bubble's
+   display; #box is placed at the tray's spot. Everything else is click-through. */
+.box { position: absolute; left: 0; top: 0; }
+/* The bubble's preset animation: the tray glides with it instead of jumping. */
+.box.glide { transition: transform 160ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .box.glide { transition: none; } }
+/* Toolbar home outline while dragging (16e) */
+.ghost { position: absolute; border-radius: var(--r-pill); outline: 1.5px dashed rgba(255,255,255,.32); outline-offset: -1.5px; background: rgba(255,255,255,.04); display: grid; place-items: center; font: 500 var(--t-11) var(--font-mono); color: var(--fg-2); pointer-events: none; transition: outline-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out); }
+.ghost[hidden] { display: none; }
+.ghost.near { outline-color: rgba(154,240,127,.75); background: rgba(154,240,127,.08); color: var(--ready); }
+.box[hidden] { display: none; }
+
+/* Tray */
+.ctray { position: relative; display: grid; gap: 6px; padding: 8px; border-radius: 18px; min-width: 332px; box-sizing: border-box; }
+.ctray .row { display: flex; align-items: center; gap: 5px; }
+.ctray #settingsBtn { margin-left: auto; }
+.ctray .vsep { width: 1px; height: 18px; background: rgba(255,255,255,.1); flex: none; margin: 0 1px; }
+.b { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--fg-2); flex: none; position: relative; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.b:hover { background: var(--glass-hover); color: var(--fg-1); }
+.b[aria-expanded="true"] { background: var(--glass-on); color: var(--fg-1); }
+.ctray svg.i { width: 18px; height: 18px; }
+.tseg { display: flex; gap: 2px; padding: 2px; border-radius: var(--r-pill); background: var(--glass-well); flex: none; }
+.tseg button { height: 30px; flex: none; width: 30px; border-radius: var(--r-pill); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--fg-2); font-size: var(--t-12); font-weight: 500; position: relative; transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out); }
+.tseg button:hover { color: var(--fg-1); }
+.tseg button[aria-checked="true"] { background: var(--glass-on); color: var(--fg-1); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 3px rgba(0,0,0,.35); }
+.tseg button svg.i { width: 17px; height: 17px; }
+/* Size letters: 30×30 targets, mono, so they never read as the zoom value */
+.tseg.size button { padding: 0; font: 600 var(--t-12) var(--font-mono); letter-spacing: .02em; }
+.tseg.size button:disabled { opacity: .35; cursor: default; }
+
+/* Zoom with detents: 28 px hit area, 4 px track */
+.zoom2 { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; height: 32px; padding: 0 2px 0 6px; }
+.zoom2 .zi { color: var(--fg-2); display: grid; }
+.zoom2 .zi svg.i { width: 14px; height: 14px; }
+.trk { position: relative; flex: 1; height: 28px; cursor: pointer; outline: none; border-radius: 8px; }
+.trk .rail { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); }
+.trk .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--fg-1); }
+.trk .det { position: absolute; top: 13px; width: 2px; height: 2px; margin-left: -1px; border-radius: 50%; background: rgba(255,255,255,.55); }
+.trk .cap-mark { position: absolute; top: 6px; width: 2px; height: 16px; margin-left: -1px; border-radius: 1px; background: var(--hold); }
+.trk .knob { position: absolute; top: 5px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: var(--fg-1); box-shadow: 0 1px 4px rgba(0,0,0,.55); transition: transform var(--d-fast) var(--ease-out); }
+.trk.dragging .knob { transform: scale(1.12); }
+.zoom2 .v { font: 500 var(--t-12) var(--font-mono); color: var(--fg-1); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Focus (mockup 11): 2 pt green ring with a 2 pt dark gap */
+.b:focus-visible, .tseg button:focus-visible, .camoff .act:focus-visible, .gpop button:focus-visible { outline: none; box-shadow: var(--focus-glass); }
+.trk:focus-visible .knob { box-shadow: var(--focus-glass); }
+
+/* Camera off / blocked pill (mockup 03b) */
+.camoff { display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 6px 0 16px; border-radius: var(--r-pill); font-weight: 500; font-size: var(--t-13); white-space: nowrap; box-sizing: border-box; }
+.camoff[hidden] { display: none; }
+.camoff svg.i { width: 18px; height: 18px; color: var(--fg-2); }
+.camoff.blocked svg.i { color: var(--hold); }
+.camoff .act { height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: rgba(255,255,255,.12); color: var(--fg-1); font-weight: 500; font-size: var(--t-13); }
+.camoff .act:hover { background: rgba(255,255,255,.18); }
+
+/* Popovers beside the tray, bottom-aligned with it */
+.gpop { position: absolute; bottom: 0; z-index: 2; border-radius: 16px; padding: 12px; display: grid; gap: 10px; width: 264px; box-sizing: border-box; background: var(--glass-strong); }
+.gpop[hidden] { display: none; }
+.gpop.right { left: calc(100% + 12px); }
+.gpop.left { right: calc(100% + 12px); }
+.gpop.img { width: auto; }
+.gpop h4 { margin: 0; font-size: var(--t-13); font-weight: 600; }
+.gpop p.h { margin: 0; color: var(--fg-2); font-size: var(--t-12); line-height: 1.45; }
+.devs { display: grid; gap: 2px; }
+.dev { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 10px; background: transparent; color: var(--fg-1); font-size: var(--t-12); text-align: left; }
+.dev:hover { background: var(--glass-hover); }
+.dev[aria-checked="true"] { background: var(--glass-well); }
+.dev .ck { width: 14px; display: grid; color: var(--ready); }
+.dev .ck svg.i { width: 14px; height: 14px; }
+.dev .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imgrow { display: flex; gap: 8px; }
+.imgrow button { width: 52px; height: 36px; border-radius: 8px; overflow: hidden; padding: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); background: center / cover no-repeat; display: grid; place-items: center; color: var(--fg-2); }
+.imgrow button[aria-checked="true"] { box-shadow: 0 0 0 2px rgba(10,12,11,.95), 0 0 0 4px var(--ready); }
+.imgrow button[aria-checked="true"]:focus-visible { box-shadow: 0 0 0 2px rgba(10,12,11,.95), 0 0 0 4px var(--ready), 0 0 0 6px rgba(255,255,255,.6); }
+.imgrow button.add { background: var(--glass-well); box-shadow: none; }
+.imgrow button.add svg.i { width: 18px; height: 18px; }
+.imgrow button:hover { color: var(--fg-1); }
+
+@media (prefers-reduced-motion: reduce) { .b, .tseg button, .trk .knob { transition: none; } }

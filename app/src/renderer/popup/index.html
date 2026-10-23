@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src mediastream: blob:; connect-src 'self'; font-src 'self'" />
+<title>Recording saved</title>
+<link rel="stylesheet" href="../shared/tokens.css" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="../shared/components.css" />
+<link rel="stylesheet" href="../shared/app.css" />
+<style>
+  body.overlay { padding: 16px; display: flex; align-items: flex-end; }
+  .saved { position: relative; animation: rise var(--d-slow) var(--ease-out); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  .saved .vthumb { background: var(--bg-2); }
+  .saved .vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .saved .name-field { padding: 0; box-shadow: none; background: var(--bg-2); cursor: text; }
+  .saved .name-field:focus-within { box-shadow: var(--focus); background: var(--bg-0); }
+  .saved .name-field.err, .saved .name-field.err:focus-within { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--danger); }
+  .saved .name-field input { border: 0; outline: none; background: transparent; color: var(--fg-1); font: inherit; font-weight: 500; padding: 0 0 0 10px; min-width: 1ch; }
+  .saved .name-field input::selection { background: rgba(154,240,127,.3); }
+  .saved .name-field .ext { padding-right: 10px; }
+  .saved .note { color: var(--fg-3); font-size: var(--t-12); margin-top: 6px; }
+  .saved .x { display: grid; place-items: center; border-radius: var(--r-sm); }
+  .saved .x:hover { background: var(--bg-2); }
+  .saved .status .spin { margin-right: 2px; }
+  .saved .status.busy { color: var(--fg-2); }
+  .saved .status.recovered { color: var(--hold); }
+</style>
+<body class="overlay">
+  <div id="root"></div>
+  <script type="module" src="./popup.js"></script>
+</body>
+</html>
