@@ -5,7 +5,9 @@ import os from 'node:os';
 
 export const DEFAULTS = {
   source: { mode: 'display', displayId: null, windowSourceId: null, windowTitle: null },
-  camera: { on: true, deviceId: null, deviceLabel: null, shape: 'circle', size: 'S', zoom: 1, background: 'none', bgImage: 'builtin:studio' },
+  camera: { on: true, deviceId: null, deviceLabel: null, shape: 'circle', size: 'S', zoom: 1, background: 'none', bgImage: 'builtin:studio', follow: false, mirror: true },
+  // camera.follow: crop tracks the face (off by default: it can jitter). camera.mirror:
+  // preview and recording are both flipped like a mirror (on, as before in the preview).
   backgrounds: [], // user-chosen background images: file names in userData/media/backgrounds
   // image: file name in userData/media/covers. privacy: 'standard' | 'semi' | 'very' (Full
   // screen only, src/shared/privacy.js); keep: what Semi-private still shows, 'dock' | 'menubar'.

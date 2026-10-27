@@ -1,6 +1,6 @@
 // Bubble tray (SETUP_V2 §11, mockup 14), docked under the bubble during setup only.
 // Row 1, how big: size S/M/L/XL · zoom. Row 2, how it looks: shape | background ·
-// camera settings · camera off. Never recorded (content
+// camera settings · camera off. Row 3: Follow me · Mirror switches. Never recorded (content
 // protection, windows.js) and never starts a bubble drag: it is a separate window
 // with no drag code, so hovering or pressing it can only change settings.
 import { installIcons, icon, esc } from '../shared/ui.js';
@@ -76,6 +76,8 @@ function draw() {
     }).join('');
     $('bgs').innerHTML = BG.map(([k, ic, n]) => radio('bg', k, (c.background || 'none') === k, icon(ic), n)).join('');
     $('settingsBtn').setAttribute('aria-expanded', String(popKind === 'settings'));
+    $('followBtn').setAttribute('aria-checked', String(!!c.follow));
+    $('mirrorBtn').setAttribute('aria-checked', String(c.mirror !== false));
   } else renderPill();
   renderPop();
   reportSize();
@@ -123,7 +125,7 @@ function renderPop() {
       <div class="devs" id="devs" role="radiogroup" aria-label="Camera device">${list
         .map((d) => `<button class="dev" role="radio" data-dev="${esc(d.deviceId)}" aria-checked="${d.deviceId === cur}" tabindex="${d.deviceId === cur ? 0 : -1}"><span class="ck">${d.deviceId === cur ? icon('check') : ''}</span><span class="nm">${esc(cleanLabel(d.label) || 'Camera')}</span></button>`)
         .join('')}</div>
-      <p class="h">Zoom follows your face. Preview is mirrored; the video is not.</p>`;
+      <p class="h">The video matches the preview, mirrored or not.</p>`;
   } else {
     pop.setAttribute('aria-label', 'Background image');
     const items = [
@@ -179,6 +181,8 @@ box.addEventListener('click', async (e) => {
   if (!b || !st) return;
   const d = b.dataset;
   if (b.id === 'settingsBtn') setPop(popKind === 'settings' ? null : 'settings');
+  else if (b.id === 'followBtn') save({ camera: { follow: !st.camera.follow } });
+  else if (b.id === 'mirrorBtn') save({ camera: { mirror: st.camera.mirror === false } });
   else if (b.id === 'offBtn') {
     popKind = null;
     save({ camera: { on: false } });
@@ -287,7 +291,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key !== 'Tab') return;
   // Order follows the rows (SETUP_V2 §11): size → zoom → shape → background →
-  // settings → camera off → bubble.
+  // settings → camera off → Follow me → Mirror → bubble.
   const stops = tabStops();
   const i = stops.indexOf(document.activeElement);
   const last = i === stops.length - 1;

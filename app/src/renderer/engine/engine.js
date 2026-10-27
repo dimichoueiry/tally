@@ -3,7 +3,7 @@
 // tick into a MediaStreamTrackGenerator, so a still screen still yields 30 fps and
 // a stalled thread catches up with repeated frames instead of losing time. The
 // finalize step stamps frame N at N/30 s (segments.js), which makes the file CFR.
-import { openCamera, stopStream, FaceTracker, drawBubble } from '../shared/camera.js';
+import { openCamera, stopStream, FaceTracker, drawBubble, CENTRE } from '../shared/camera.js';
 import { CameraBackground } from '../shared/bg/background.js';
 import { clampZoom } from '../../shared/geometry.js';
 import { SYSTEM_AUDIO, VIDEO_BPS, AUDIO_BPS } from '../../shared/media.js';
@@ -268,7 +268,7 @@ function compose() {
       by = dy + dh - (24 + bubble.rect.height) * k;
     }
     const v = cam.video;
-    const centre = face.update(v);
+    const centre = bubble.follow ? face.update(v) : CENTRE;
     const zoom = clampZoom(bubble.zoom, v.videoWidth, v.videoHeight);
     const w = bubble.rect.width * k;
     const h = bubble.rect.height * k;
@@ -277,7 +277,7 @@ function compose() {
     if (processed) S.perf.bg.push(performance.now() - tb);
     drawBubble(ctx, processed || v, {
       x: bx, y: by, w, h,
-      shape: bubble.shape, zoom: processed ? 1 : zoom, centre: processed ? { x: 0.5, y: 0.5 } : centre, mirror: false, scale: k,
+      shape: bubble.shape, zoom: processed ? 1 : zoom, centre: processed ? CENTRE : centre, mirror: bubble.mirror !== false, scale: k,
     });
     S.cameraUsed = true;
   }

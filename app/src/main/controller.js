@@ -1288,6 +1288,8 @@ export class Controller {
       size: effSize,
       chosenSize: size,
       zoom,
+      follow: st.camera.follow,
+      mirror: st.camera.mirror,
       deviceId: st.camera.deviceId,
       width: rect?.width,
       height: rect?.height,
@@ -1395,6 +1397,8 @@ export class Controller {
       capture,
       shape: st.camera.shape,
       zoom: st.camera.zoom,
+      follow: st.camera.follow,
+      mirror: st.camera.mirror,
       background: st.camera.background,
       bgImage: st.camera.bgImage,
     };

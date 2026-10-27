@@ -30,9 +30,13 @@ export function stopStream(stream) {
 }
 
 // Face-centred crop (spec §3.2). MediaPipe's BlazeFace short-range detector runs on
-// the CPU at ~10 fps; the centre eases toward the face (~300 ms) so head movement
-// doesn't jitter the frame. No face → the centre drifts back to the frame centre.
+// the CPU at ~10 fps; the centre eases toward the face (~450 ms) so head movement
+// doesn't jitter the frame, and ignores moves under DEADBAND (detector noise, small
+// head motion). No face → the centre drifts back to the frame centre. Only used when
+// camera.follow is on; otherwise callers crop around CENTRE.
 const DETECT_W = 320;
+const DEADBAND = 0.04; // fraction of the frame
+export const CENTRE = Object.freeze({ x: 0.5, y: 0.5 });
 
 export class FaceTracker {
   constructor() {
@@ -82,7 +86,8 @@ export class FaceTracker {
             const best = r?.detections.sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height)[0];
             if (best) {
               const b = best.boundingBox;
-              this.target = { x: (b.originX + b.width / 2) / W, y: (b.originY + b.height / 2) / H };
+              const t = { x: (b.originX + b.width / 2) / W, y: (b.originY + b.height / 2) / H };
+              if (Math.hypot(t.x - this.target.x, t.y - this.target.y) > DEADBAND) this.target = t;
               this.lastFace = now;
             } else if (now - this.lastFace > 1500) this.target = { x: 0.5, y: 0.5 };
           } catch {}
@@ -96,7 +101,7 @@ export class FaceTracker {
     }
     const dt = now - this.lastStep;
     this.lastStep = now;
-    const k = 1 - Math.exp(-dt / 100); // ≈ 95 % of the way in 300 ms
+    const k = 1 - Math.exp(-dt / 150); // ≈ 95 % of the way in 450 ms
     this.centre = { x: this.centre.x + (this.target.x - this.centre.x) * k, y: this.centre.y + (this.target.y - this.centre.y) * k };
     return this.centre;
   }

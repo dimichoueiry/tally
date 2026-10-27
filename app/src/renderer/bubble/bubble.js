@@ -1,7 +1,7 @@
 // Camera bubble preview (spec §3.2). Mirrored, shaped, zoomed and face-centred
 // exactly like the engine's composite. Content-protected: the HUD never reaches the video.
 import { installIcons, icon } from '../shared/ui.js';
-import { openCamera, stopStream, FaceTracker, drawBubble } from '../shared/camera.js';
+import { openCamera, stopStream, FaceTracker, drawBubble, CENTRE } from '../shared/camera.js';
 import { CameraBackground } from '../shared/bg/background.js';
 import { cssClipPath, clampZoom, maxZoom, squirclePoints, RECT_RADIUS, handlePoint, sizeFromDrag, bubbleSize } from '../../shared/geometry.js';
 import { BubbleDrag } from '../../shared/bubbleDrag.js';
@@ -170,7 +170,7 @@ function frame() {
   if (!camera) return;
   const v = camera.video;
   const z = clampZoom(state.zoom, v.videoWidth, v.videoHeight);
-  const centre = face.update(v);
+  const centre = state.follow ? face.update(v) : CENTRE;
   const t0 = performance.now();
   const out = bg?.process(v, { width: canvas.width, height: canvas.height, zoom: z, centre });
   if (out) {
@@ -178,8 +178,8 @@ function frame() {
     if (perf.length > 600) perf.shift();
   }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // CSS clip-path shapes it; the preview is mirrored, the recording is not.
-  drawBubble(ctx, out || v, { x: 0, y: 0, w: canvas.width, h: canvas.height, shape: state.shape, zoom: out ? 1 : z, centre: out ? { x: 0.5, y: 0.5 } : centre, mirror: true, clip: false });
+  // CSS clip-path shapes it; mirrored exactly when the recording is (camera.mirror).
+  drawBubble(ctx, out || v, { x: 0, y: 0, w: canvas.width, h: canvas.height, shape: state.shape, zoom: out ? 1 : z, centre: out ? CENTRE : centre, mirror: state.mirror !== false, clip: false });
 }
 
 tally.on('bubble:state', async (s) => {

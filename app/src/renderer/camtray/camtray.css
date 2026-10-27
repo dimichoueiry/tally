@@ -29,6 +29,12 @@
 .tseg.size button { padding: 0; font: 600 var(--t-12) var(--font-mono); letter-spacing: .02em; }
 .tseg.size button:disabled { opacity: .35; cursor: default; }
 
+/* Row 3 switches (shared .switch from components.css) */
+.tog { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px 0 6px; border-radius: var(--r-pill); background: var(--glass-well); color: var(--fg-2); font-size: var(--t-12); font-weight: 500; flex: none; transition: color var(--d-fast) var(--ease-out); }
+.tog:hover, .tog[aria-checked="true"] { color: var(--fg-1); }
+.tog[aria-checked="true"] .switch { background: var(--ready); }
+.tog[aria-checked="true"] .switch::after { transform: translateX(12px); background: var(--fg-on-ready); }
+
 /* Zoom with detents: 28 px hit area, 4 px track */
 .zoom2 { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; height: 32px; padding: 0 2px 0 6px; }
 .zoom2 .zi { color: var(--fg-2); display: grid; }
@@ -43,7 +49,7 @@
 .zoom2 .v { font: 500 var(--t-12) var(--font-mono); color: var(--fg-1); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Focus (mockup 11): 2 pt green ring with a 2 pt dark gap */
-.b:focus-visible, .tseg button:focus-visible, .camoff .act:focus-visible, .gpop button:focus-visible { outline: none; box-shadow: var(--focus-glass); }
+.b:focus-visible, .tseg button:focus-visible, .tog:focus-visible, .camoff .act:focus-visible, .gpop button:focus-visible { outline: none; box-shadow: var(--focus-glass); }
 .trk:focus-visible .knob { box-shadow: var(--focus-glass); }
 
 /* Camera off / blocked pill (mockup 03b) */
