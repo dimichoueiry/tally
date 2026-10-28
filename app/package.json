@@ -13,7 +13,8 @@
     "vendor": "node scripts/vendor.mjs",
     "postinstall": "node scripts/vendor.mjs",
     "dist:mac": "npm run native && npm test && node scripts/dist-mac.mjs",
-    "dist:win": "NODE_OPTIONS=--experimental-require-module electron-builder --win nsis --x64"
+    "dist:win": "NODE_OPTIONS=--experimental-require-module electron-builder --win nsis --x64",
+    "release:mac": "scripts/release-mac.sh"
   },
   "devDependencies": {
     "electron": "45.0.0",

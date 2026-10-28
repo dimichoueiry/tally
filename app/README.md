@@ -41,6 +41,7 @@ Local-only: every renderer has `connect-src 'self'`, and `src/main/netguard.js` 
 - Node 22.11 needs `NODE_OPTIONS=--experimental-require-module` for electron-builder 26 (set in the scripts).
 - Windows: `npm run dist:win` packages the app, but the NSIS step needs Rosetta 2 on Apple Silicon (electron-builder's macOS `makensis` is x86_64-only). See `../INSTALL.md`.
 - App icon: `build/icon.png` (from `npm run icons`).
+- Releases: `npm run release:mac -- <notes.md> [--publish]` (`scripts/release-mac.sh`) builds both DMGs, fails if any Mach-O in the arm64 app lacks arm64 or any in the x64 app lacks x86_64, appends both SHA-256s to the notes, and with `--publish` creates the GitHub release with both DMGs. Don't pass `--arm64` alone to `dist:mac` for a release: Intel users get nothing.
 
 ## Layout
 
