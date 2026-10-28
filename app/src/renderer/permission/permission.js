@@ -16,6 +16,7 @@ function render() {
     <div class="onb-foot">
       <small>${icon('lock', 's14')} Camera and microphone are asked later, only if you turn them on.</small>
       <span class="sp"></span>
+      ${granted ? '' : `<button class="btn quiet" id="camonly" title="Record just your camera: no screen, so no Screen Recording needed">Use camera only</button>`}
       ${granted
         ? `<button class="btn primary" id="relaunch" style="height:40px;padding:0 18px">Reopen Tally ${icon('arrow-r', 's14')}</button>`
         : `<button class="btn quiet" id="reset">${confirmReset ? 'Reset now?' : 'Reset permission…'}</button><button class="btn primary" id="open" style="height:40px;padding:0 18px">Open System Settings ${icon('arrow-r', 's14')}</button>`}
@@ -26,6 +27,7 @@ root.addEventListener('click', async (e) => {
   const id = e.target.closest('button')?.id;
   if (id === 'open') tally.invoke('perm:open');
   if (id === 'relaunch') tally.invoke('perm:relaunch');
+  if (id === 'camonly') tally.invoke('perm:cameraOnly'); // Camera only needs no Screen Recording
   if (id === 'reset') {
     if (!confirmReset) { confirmReset = true; return render(); }
     await tally.invoke('perm:reset');

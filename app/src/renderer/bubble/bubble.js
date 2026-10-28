@@ -3,7 +3,7 @@
 import { installIcons, icon } from '../shared/ui.js';
 import { openCamera, stopStream, FaceTracker, drawBubble, CENTRE } from '../shared/camera.js';
 import { CameraBackground } from '../shared/bg/background.js';
-import { cssClipPath, clampZoom, maxZoom, squirclePoints, RECT_RADIUS, handlePoint, sizeFromDrag, bubbleSize } from '../../shared/geometry.js';
+import { cssClipPath, clampZoom, maxZoom, squirclePoints, RECT_RADIUS, handlePoint, diamFromDrag, resizeZone, anchorForZone } from '../../shared/geometry.js';
 import { BubbleDrag } from '../../shared/bubbleDrag.js';
 
 const tally = window.tally;
@@ -74,8 +74,8 @@ function renderTag() {
   $('bgbtn').classList.toggle('on', !!state.background && state.background !== 'none');
 }
 
-const SHAPE = { circle: 'circle', squircle: 'squircle', landscape: 'landscape', portrait: 'portrait' };
-const SIZE = { S: 'small', M: 'medium', L: 'large', XL: 'extra large' };
+const SHAPE = { circle: 'circle', squircle: 'squircle', landscape: 'landscape', portrait: 'portrait', frame: 'camera only' };
+const sizeText = () => (state.cameraOnly ? `${state.aspect} preview` : state.width === state.height ? `${state.width} pt` : `${state.width}×${state.height} pt`);
 
 function layout() {
   const { width, height, shape } = state;
@@ -94,9 +94,12 @@ function layout() {
   $('zoom').value = state.zoom;
   $('zv').textContent = `${state.zoom.toFixed(1)}×`;
   setPct();
-  cam.setAttribute('aria-label', `Camera preview, ${SHAPE[shape]}, ${SIZE[state.size]}, zoom ${state.zoom.toFixed(1)}×, background ${state.background === 'none' || !state.background ? 'none' : BG_LABEL[state.background].toLowerCase()}`);
+  cam.setAttribute('aria-label', `Camera preview, ${SHAPE[shape] || shape}, ${sizeText()}, zoom ${state.zoom.toFixed(1)}×, background ${state.background === 'none' || !state.background ? 'none' : BG_LABEL[state.background].toLowerCase()}`);
   cam.tabIndex = state.focusable ? 0 : -1;
   wrap.classList.toggle('setup', !!state.setup);
+  wrap.classList.toggle('camonly', !!state.cameraOnly);
+  // Small bubbles: the hover HUD keeps its buttons and drops the zoom slider.
+  wrap.classList.toggle('tiny', width < 200);
   placeHandle();
 }
 
@@ -108,23 +111,24 @@ function placeHandle() {
   const p = handlePoint(state.shape, state.width, state.height, a);
   h.style.left = `${p.x}px`;
   h.style.top = `${p.y}px`;
-  h.className = `sizeh ${a.v === 'bottom' ? 'n' : 's'}${a.h === 'left' ? 'e' : 'w'}`;
-  const d = bubbleSize(state.shape, state.chosenSize || state.size);
-  $('sizechip').textContent = `${state.chosenSize || state.size} · ${state.shape === 'circle' || state.shape === 'squircle' ? `${d.width} pt` : `${d.width}×${d.height}`}`;
+  h.className = `sizeh ${a.v === 'bottom' ? 'n' : 's'}${a.h === 'left' ? 'e' : 'w'}${state.width < 140 ? ' sm' : ''}`;
+  $('sizechip').textContent = sizeText();
 }
 
 function setPct() {
   $('zoom').style.setProperty('--pct', `${(Number($('zoom').value) - 1) * 100}%`);
 }
 
+// Camera only opens the camera at its best (as the engine does, so both get one format).
 async function ensureCamera() {
-  if (camera && camera.deviceId === (state.deviceId || null)) return;
+  const hiRes = !!state.cameraOnly;
+  if (camera && camera.deviceId === (state.deviceId || null) && camera.hiRes === hiRes) return;
   if (opening) return opening;
   opening = (async () => {
     stopCamera();
     try {
-      const c = await openCamera(state.deviceId);
-      camera = { ...c, deviceId: state.deviceId || null };
+      const c = await openCamera(state.deviceId, { hiRes });
+      camera = { ...c, deviceId: state.deviceId || null, hiRes };
       face = face || new FaceTracker();
       $('lost').hidden = true;
       const track = c.stream.getVideoTracks()[0];
@@ -139,7 +143,9 @@ async function ensureCamera() {
     }
     opening = null;
   })();
-  return opening;
+  await opening;
+  // The mode changed while it was opening: open again with the right resolution.
+  if (state.visible && camera && camera.hiRes !== !!state.cameraOnly) return ensureCamera();
 }
 
 function showLost(text) {
@@ -197,7 +203,7 @@ tally.on('bubble:state', async (s) => {
   wrap.hidden = false;
   if (s.animFrom && !reduceMotion.matches) growFrom(s.animFrom);
   syncBackground();
-  if (!prev.visible || prev.deviceId !== s.deviceId) await ensureCamera();
+  if (!prev.visible || prev.deviceId !== s.deviceId || !!prev.cameraOnly !== !!s.cameraOnly) await ensureCamera();
   startLoop();
 });
 
@@ -230,7 +236,8 @@ const drag = new BubbleDrag();
 function hit(x, y) {
   const r = cam.getBoundingClientRect();
   if (resize.active) return true;
-  if (state.setup && wrap.classList.contains('hover')) {
+  if (state.setup && !state.cameraOnly && wrap.classList.contains('hover')) {
+    if (zoneAt(x, y)) return true;
     const h = $('sizeh').getBoundingClientRect();
     if (Math.hypot(x - (h.left + h.width / 2), y - (h.top + h.height / 2)) <= h.width / 2 + 2) return true;
   }
@@ -273,6 +280,7 @@ document.addEventListener('pointermove', (e) => {
   if (resize.active) return applyResize(resize.move(e.screenX, e.screenY, e.buttons), e);
   if (drag.active) return apply(drag.move(e.screenX, e.screenY, e.buttons));
   setInside(hit(e.clientX, e.clientY));
+  showZone(zoneAt(e.clientX, e.clientY));
 });
 document.addEventListener('mouseleave', (e) => {
   endDrag(e);
@@ -281,16 +289,23 @@ document.addEventListener('mouseleave', (e) => {
 });
 
 cam.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || state.cameraOnly) return; // the Camera only preview doesn't move
+  const z = zoneAt(e.clientX, e.clientY);
   try {
     cam.setPointerCapture(e.pointerId);
   } catch {}
+  // A press on the edge band (hovered, in setup) resizes; anywhere else drags.
+  if (z) {
+    grabbed = z;
+    return applyResize(resize.press(e.screenX, e.screenY, e.button));
+  }
   apply(drag.press(e.screenX, e.screenY, e.button));
 });
+cam.addEventListener('pointerup', (e) => resize.active && endResize(e));
 $('grip').addEventListener('pointerdown', (e) => cam.dispatchEvent(new PointerEvent('pointerdown', e)));
 cam.addEventListener('pointerup', endDrag);
-cam.addEventListener('pointercancel', endDrag);
-cam.addEventListener('lostpointercapture', endDrag);
+cam.addEventListener('pointercancel', (e) => (resize.active ? endResize(e) : endDrag(e)));
+cam.addEventListener('lostpointercapture', (e) => (resize.active ? endResize(e) : endDrag(e)));
 window.addEventListener('blur', () => {
   endDrag();
   endResize();
@@ -301,22 +316,40 @@ document.addEventListener('keydown', (e) => {
   endResize();
 });
 
-// Corner resize (setup only). Same gesture rules as the drag (LC-9): it needs a press
-// on the handle and > 3 px of movement with the button held; any release, lost
-// capture, blur or Esc ends it. Steps snap to S/M/L/XL; main keeps the anchor fixed.
+// Resize (setup only, while hovering): the corner handle, or the 10 pt band along the
+// edge (rim for a circle), so the bubble never needs a handle in the way. Same gesture
+// rules as the drag (LC-9): a press plus > 3 px of movement with the button held; any
+// release, lost capture, blur or Esc ends it. Continuous; main keeps the fixed corner.
 const resize = new BubbleDrag();
 let anchorPt = null;
+let grabbed = null; // { zx, zy } edge band pressed, or null for the corner handle
+let axes = { x: true, y: true };
+
+// The resize zone under a window point, or null. Only in setup, hovered, not Camera only.
+function zoneAt(x, y) {
+  if (!state.setup || state.cameraOnly || !state.width || drag.active || !wrap.classList.contains('hover')) return null;
+  const r = cam.getBoundingClientRect();
+  return resizeZone(state.shape, r.width, r.height, { x: x - r.left, y: y - r.top }, state.width < 140 ? 8 : 10);
+}
+
+const CURSOR = { '-1,-1': 'nwse', '1,1': 'nwse', '1,-1': 'nesw', '-1,1': 'nesw', '-1,0': 'ew', '1,0': 'ew', '0,-1': 'ns', '0,1': 'ns' };
+function showZone(z) {
+  cam.style.cursor = z ? `${CURSOR[`${z.zx},${z.zy}`]}-resize` : '';
+  wrap.classList.toggle('edge', !!z);
+}
+
 function applyResize(actions) {
   for (const a of actions) {
     if (a.phase === 'start') {
       wrap.classList.add('resizing');
       const r = state.rect;
-      const an = state.anchor || { h: 'left', v: 'bottom' };
+      const screenAnchor = state.anchor || { h: 'left', v: 'bottom' };
+      const an = grabbed ? anchorForZone(grabbed, screenAnchor) : screenAnchor;
+      axes = grabbed ? { x: grabbed.zx !== 0, y: grabbed.zy !== 0 } : { x: true, y: true };
       anchorPt = { x: an.h === 'left' ? r.x : r.x + r.width, y: an.v === 'top' ? r.y : r.y + r.height };
-      tally.invoke('bubble:resize', { phase: 'start' });
+      tally.invoke('bubble:resize', { phase: 'start', anchor: an });
     } else if (a.phase === 'move' && anchorPt) {
-      const size = sizeFromDrag(state.shape, anchorPt, a);
-      if (size !== state.chosenSize) tally.invoke('bubble:resize', { phase: 'move', size });
+      tally.invoke('bubble:resize', { phase: 'move', diam: diamFromDrag(state.shape, anchorPt, a, axes) });
     } else if (a.phase === 'end') {
       wrap.classList.remove('resizing');
       anchorPt = null;
@@ -328,10 +361,12 @@ function endResize(e) {
   // Same rule as endDrag: only a release carries a trustworthy position.
   applyResize(resize.end(e?.type === 'pointerup' ? e.screenX : undefined, e?.type === 'pointerup' ? e.screenY : undefined));
   wrap.classList.remove('resizing');
+  grabbed = null;
 }
 $('sizeh').addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || !state.setup) return;
+  if (e.button !== 0 || !state.setup || state.cameraOnly) return;
   e.stopPropagation();
+  grabbed = null;
   try {
     $('sizeh').setPointerCapture(e.pointerId);
   } catch {}

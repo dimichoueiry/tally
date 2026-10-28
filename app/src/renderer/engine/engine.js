@@ -1,11 +1,12 @@
-// Hidden engine: capture → composite (screen + camera bubble) → H.264 MP4.
+// Hidden engine: capture → composite (screen + camera bubble) → H.264 MP4. Camera only
+// (kind 'camera'): no screen at all, the frame is the camera's crop at the chosen aspect.
 // The compositor runs on a fixed 30 fps clock and emits exactly one VideoFrame per
 // tick into a MediaStreamTrackGenerator, so a still screen still yields 30 fps and
 // a stalled thread catches up with repeated frames instead of losing time. The
 // finalize step stamps frame N at N/30 s (segments.js), which makes the file CFR.
 import { openCamera, stopStream, FaceTracker, drawBubble, CENTRE } from '../shared/camera.js';
 import { CameraBackground } from '../shared/bg/background.js';
-import { clampZoom } from '../../shared/geometry.js';
+import { clampZoom, cameraOutputSize, aspectOf } from '../../shared/geometry.js';
 import { SYSTEM_AUDIO, VIDEO_BPS, AUDIO_BPS } from '../../shared/media.js';
 import { warmEncoder, settleWarmup } from './warmup.js';
 import { pickMic, micConstraints, buildMixGraph, connectInput, disconnectInput, peakOf } from '../../shared/mic.js';
@@ -182,14 +183,20 @@ async function reopenMic(sess) {
 
 // ───────── camera ─────────
 
+// Camera only asks for the camera's best (the bubble preview asks the same, so the two
+// never fight over the device's format).
 async function attachCamera(sess, deviceId) {
-  const cam = await openCamera(deviceId);
+  return wireCamera(sess, await openCamera(deviceId, { hiRes: sess.kind === 'camera' }), deviceId);
+}
+
+function wireCamera(sess, cam, deviceId) {
   const track = cam.stream.getVideoTracks()[0];
   cam.deviceId = track.getSettings().deviceId || deviceId;
   cam.label = track.label;
   track.addEventListener('ended', () => {
     if (sess.cam !== cam) return;
     // Camera unplugged: the screen keeps recording; the video loses the bubble from now.
+    // Camera only keeps its clock running on a dark frame until the camera is back.
     sess.cam = null;
     sess.camLost = { deviceId: cam.deviceId, label: cam.label };
     stopStream(cam.stream);
@@ -233,7 +240,30 @@ function emitFrame() {
   S.frames++;
 }
 
+// Camera only: the whole frame is the camera, cropped to the output's aspect exactly like
+// the setup preview (same cropRect), with zoom, face follow, mirror and background.
+function composeCamera() {
+  const { ctx, canvas, cam, bubble, face } = S;
+  const v = cam?.video;
+  if (!v?.videoWidth) {
+    ctx.fillStyle = '#0b0e0d';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  const centre = bubble?.follow ? face.update(v) : CENTRE;
+  const zoom = clampZoom(bubble?.zoom ?? 1, v.videoWidth, v.videoHeight);
+  const tb = performance.now();
+  const processed = S.bg?.process(v, { width: canvas.width, height: canvas.height, zoom, centre });
+  if (processed) S.perf.bg.push(performance.now() - tb);
+  drawBubble(ctx, processed || v, {
+    x: 0, y: 0, w: canvas.width, h: canvas.height,
+    shape: 'frame', zoom: processed ? 1 : zoom, centre: processed ? CENTRE : centre, mirror: bubble?.mirror !== false, clip: false,
+  });
+  S.cameraUsed = true;
+}
+
 function compose() {
+  if (S.kind === 'camera') return composeCamera();
   const { ctx, canvas, screen, cam, bubble, face } = S;
   const sv = screen.video;
   const fw = sv.videoWidth;
@@ -312,7 +342,8 @@ async function loadMask(mask) {
 function setBackground(b) {
   const mode = b?.background || 'none';
   if (!S?.cam && !S?.camLost) return;
-  if (mode !== 'none' && !S.bg) S.bg = new CameraBackground({ log, onStatus: (st) => emit('bg-status', { status: st }) });
+  // Camera only composites at the output's size (up to 2160 on a side), not bubble size.
+  if (mode !== 'none' && !S.bg) S.bg = new CameraBackground({ log, onStatus: (st) => emit('bg-status', { status: st }), maxSide: S.kind === 'camera' ? 2160 : undefined });
   S.bg?.setMode(mode, b?.bgImage);
 }
 
@@ -353,11 +384,21 @@ async function warmUp(sess) {
 }
 
 const api = {
-  async prepare({ kind, quality, camera, bubble, captureScale, systemAudio, mic, mask }) {
+  async prepare({ kind, quality, camera, bubble, captureScale, systemAudio, mic, mask, aspect }) {
     await api.abort();
-    const screen = await openScreen(!!systemAudio);
-    const sysTrack = screen.stream.getAudioTracks()[0] || null;
-    const { width, height } = outputSize(screen.video.videoWidth, screen.video.videoHeight, quality);
+    // Camera only never calls getDisplayMedia: no screen, no screen permission, no system audio.
+    const camOnly = kind === 'camera';
+    let camFirst = null;
+    if (camOnly) {
+      // The output size comes from the camera, so it opens first. No camera: prepare fails.
+      camFirst = await openCamera(camera.deviceId, { hiRes: true });
+      if (!camFirst.video.videoWidth) await new Promise((r) => camFirst.video.addEventListener('loadedmetadata', r, { once: true }));
+    }
+    const screen = camOnly ? null : await openScreen(!!systemAudio);
+    const sysTrack = screen?.stream.getAudioTracks()[0] || null;
+    const { width, height } = camOnly
+      ? cameraOutputSize(camFirst.video.videoWidth, camFirst.video.videoHeight, aspect, quality)
+      : outputSize(screen.video.videoWidth, screen.video.videoHeight, quality);
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -370,7 +411,7 @@ const api = {
       writer = track.writable.getWriter();
     } else track = canvas.captureStream(0).getVideoTracks()[0];
     S = {
-      kind, quality, captureScale, screen, cam: null, camLost: null, bubble, canvas, ctx, writer, track, audio: null, bg: null,
+      kind, quality, captureScale, screen, cam: null, camLost: null, bubble, canvas, ctx, writer, track, audio: null, bg: null, aspect: camOnly ? aspectOf(aspect) : null,
       face: new FaceTracker(), frames: 0, ticks: 0, lateTicks: 0, recorder: null, chain: Promise.resolve(),
       discard: false, cameraUsed: false, thumb: null, activeMs: 0, runningSince: null, owed: 0,
       perf: { tick: [], bg: [] }, micWanted: mic?.on ? { deviceId: mic.deviceId, label: mic.deviceLabel } : null,
@@ -392,8 +433,9 @@ const api = {
     if (sysTrack || mic?.on) S.audio = await openAudioMixer({ system: sysTrack && { track: sysTrack, info: { label: sysTrack.label, settings: sysTrack.getSettings() } }, mic: micIn });
     if (S.audio && mic?.on && !micIn) S.audio.lost.mic = 'unavailable';
     S.out = new MediaStream([track, ...(S.audio ? [S.audio.out] : [])]);
-    watchScreen(screen);
-    if (camera.on) {
+    if (screen) watchScreen(screen);
+    if (camFirst) wireCamera(S, camFirst, camera.deviceId);
+    else if (camera.on) {
       try {
         await attachCamera(S, camera.deviceId);
       } catch (e) {
@@ -427,7 +469,8 @@ const api = {
     S.warmCtl = new AbortController();
     S.warm = warmUp(S);
     return {
-      width, height, source: [screen.video.videoWidth, screen.video.videoHeight], camera: !!S.cam, settings: screen.track.getSettings(),
+      width, height, source: screen ? [screen.video.videoWidth, screen.video.videoHeight] : [S.cam?.video.videoWidth, S.cam?.video.videoHeight], camera: !!S.cam,
+      settings: screen ? screen.track.getSettings() : S.cam?.stream.getVideoTracks()[0].getSettings(),
       audio: S.audio ? { system: S.audio.info.system, mic: S.audio.info.mic, context: S.audio.ac.state } : null,
       background: S.bg?.loadInfo || null,
       mask: S.mask ? S.mask.rects : null,
@@ -507,6 +550,7 @@ const api = {
   // change resolution, so the display is letterboxed into the existing frame.
   async switchSource({ captureScale, mask }) {
     if (!S) throw new Error('no session');
+    if (S.kind === 'camera') throw new Error('camera only has no screen to switch');
     const next = await openScreen(false);
     S.mask?.bitmap.close();
     S.mask = await loadMask(mask).catch(() => null);
@@ -624,7 +668,7 @@ function teardown() {
   if (!S) return;
   S.warmCtl?.abort();
   S.clock?.dispose();
-  stopStream(S.screen.stream);
+  stopStream(S.screen?.stream);
   stopStream(S.cam?.stream);
   closeAudio(S.audio);
   S.face?.close();

@@ -10,9 +10,10 @@ export function defaultBaseName(date, source) {
 }
 
 // Short source label: "Built-in" for the built-in display, the display label
-// otherwise, the window title (capped) for windows.
+// otherwise, the window title (capped) for windows, "Camera" for Camera only.
 export function sourceLabel(src) {
   if (!src) return '';
+  if (src.kind === 'camera') return 'Camera';
   if (src.kind === 'display') return /built-?in/i.test(src.label || '') ? 'Built-in' : src.label || 'Display';
   const title = stripFileExt((src.title || src.name || 'Window').trim()) || 'Window';
   return title.length > 40 ? `${title.slice(0, 39).trim()}…` : title;

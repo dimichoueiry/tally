@@ -72,7 +72,12 @@ function recordBtn() {
   return `<button class="rec2" data-k="record" data-act="record" ${why ? 'aria-disabled="true"' : ''} aria-label="Record, ${spoken('R')}${why ? `. ${esc(why)}` : ''}" data-tip="${esc(why || 'Record')}" data-key="${why ? '' : keys('R')}"><span class="rdot" aria-hidden="true"></span>Record<span class="kbd">${keys('R')}</span></button>`;
 }
 
+const camOnly = () => st.source.mode === 'camera';
+const SRC_ICON = { display: 'monitor', window: 'window', camera: 'cam-only' };
+const srcIcon = () => SRC_ICON[st.source.mode] || 'monitor';
+
 function sourceLabel() {
+  if (camOnly()) return `Camera only · ${st.camOnly?.aspect || '16:9'}`;
   if (st.source.mode !== 'window') return 'Full screen';
   if (setup.window) return setup.window.title || setup.window.app || 'Window';
   return 'Choose a window';
@@ -115,40 +120,42 @@ const notesBtn = () => {
 function setupHtml() {
   const c = st.camera;
   const win = st.source.mode === 'window';
+  const cam = camOnly();
+  const full = !win && !cam;
   const grip = '<span class="grip2" data-drag aria-hidden="true"></span>';
   if (collapsed()) {
     const why = setup.recordWhy;
     return {
       label: 'Recording setup, collapsed',
       html: `<button class="xbadge" data-k="close" data-act="close" tabindex="-1" aria-label="Close setup" data-tip="Close setup" data-key="Esc">${icon('x')}</button>
-        ${grip}${expandBtn()}${pvDot(st.source.mode !== 'window' && setup.coverAvailable)}
+        ${grip}${expandBtn()}${pvDot(full && setup.coverAvailable)}
         <button class="rec2 mini" data-k="record" data-act="record" ${why ? 'aria-disabled="true"' : ''} aria-label="Record, ${spoken('R')}${why ? `. ${esc(why)}` : ''}" data-tip="${esc(why || 'Record')}" data-key="${why ? '' : keys('R')}"><span class="rdot" aria-hidden="true"></span></button>`,
     };
   }
   if (!unfolded()) {
     // Privacy is always one click away in Full screen (it doesn't apply to a window):
     // eye-off when bars are hidden in the video (S22), a plain eye at Standard.
-    const pvF = pvEntries(!win).folded;
+    const pvF = pvEntries(full).folded;
     const pvStat = pvF ? 1 : 0;
     const pvOn = !!pvF?.on;
     const stat = [
-      !c.on ? `<button class="b stat" data-k="stat-cam" data-act="camera-on" aria-label="Camera off, click to turn on" data-tip="Camera off · click to turn on">${icon('camera-off')}</button>` : '',
-      st.systemAudio ? `<button class="b stat on" data-k="stat-audio" data-act="audio-off" aria-label="System audio on, click to turn off" data-tip="System audio on · click to turn off">${icon('speaker')}</button>` : '',
+      !c.on && !cam ? `<button class="b stat" data-k="stat-cam" data-act="camera-on" aria-label="Camera off, click to turn on" data-tip="Camera off · click to turn on">${icon('camera-off')}</button>` : '',
+      st.systemAudio && !cam ? `<button class="b stat on" data-k="stat-audio" data-act="audio-off" aria-label="System audio on, click to turn off" data-tip="System audio on · click to turn off">${icon('speaker')}</button>` : '',
       st.mic.on ? `<button class="b stat on" data-k="stat-mic" data-act="mic-off" aria-label="Microphone on, click to turn off" data-tip="Microphone on · click to turn off">${icon('mic')}</button>` : '',
       pvStat ? `<button class="b stat ${pvOn ? 'on' : ''}" data-k="stat-privacy" data-act="privacy-open" data-pop="cover" aria-haspopup="dialog" aria-expanded="${popKind === 'cover'}" aria-label="Privacy: ${pvName()}${pvOn ? `, ${privacyHidden()} in the video` : ''}. Click to change" data-tip="Privacy · ${pvName()}${pvOn ? ` · ${privacyHidden()}` : ''}">${icon(pvF.icon)}</button>` : '',
     ].join('');
     return {
-      label: `Recording setup, ${3 + (!c.on) + st.systemAudio + st.mic.on + pvStat} controls`,
+      label: `Recording setup, ${3 + (!c.on && !cam) + (st.systemAudio && !cam) + st.mic.on + pvStat} controls`,
       html: `<button class="xbadge" data-k="close" data-act="close" tabindex="-1" aria-label="Close setup" data-tip="Close setup" data-key="Esc">${icon('x')}</button>
         ${grip}
         <button class="b tgl" data-k="fold" data-act="fold" aria-expanded="false" aria-label="All controls" data-tip="All controls" data-key="${cmd('\\')}">${icon('chev-r')}</button>
         ${collapseBtn()}
-        <button class="chip2" data-k="chip" data-act="chip" aria-haspopup="menu" aria-expanded="${popKind === 'chip'}" aria-label="Source: ${esc(sourceLabel())}">${icon(win ? 'window' : 'monitor')}<span class="lbl">${esc(sourceLabel())}</span>${icon('chev-d', 'cd')}</button>
+        <button class="chip2" data-k="chip" data-act="chip" aria-haspopup="menu" aria-expanded="${popKind === 'chip'}" aria-label="Source: ${esc(sourceLabel())}">${icon(srcIcon())}<span class="lbl">${esc(sourceLabel())}</span>${icon('chev-d', 'cd')}</button>
         ${stat}${recordBtn()}`,
     };
   }
   const cover = setup.coverAvailable
-    ? `<button class="b swb x-unf" data-k="cover" data-act="cover" aria-haspopup="dialog" aria-expanded="${popKind === 'cover'}" ${win ? 'aria-disabled="true"' : ''} aria-label="Desktop cover &amp; privacy: ${coverName()}, ${pvName()}" data-tip="${win ? 'No cover in Window mode' : 'Desktop cover &amp; privacy'}">${coverSwatch()}</button>`
+    ? `<button class="b swb x-unf" data-k="cover" data-act="cover" aria-haspopup="dialog" aria-expanded="${popKind === 'cover'}" ${full ? '' : 'aria-disabled="true"'} aria-label="Desktop cover &amp; privacy: ${coverName()}, ${pvName()}" data-tip="${win ? 'No cover in Window mode' : cam ? 'No desktop in Camera only' : 'Desktop cover &amp; privacy'}">${coverSwatch()}</button>`
     : '';
   return {
     label: `Recording setup, ${setup.coverAvailable ? 11 : 10} controls`,
@@ -157,12 +164,15 @@ function setupHtml() {
       <button class="b quiet x-unf" data-k="close" data-act="close" aria-label="Close setup" data-tip="Close setup" data-key="Esc">${icon('x')}</button>
       ${collapseBtn()}
       <div class="srcg x-unf" role="radiogroup" aria-label="Source">
-        <button role="radio" data-k="src-display" data-act="source-display" aria-checked="${!win}" tabindex="${win ? -1 : 0}" aria-label="Full screen" data-tip="${win ? 'Full screen' : ''}">${icon('monitor')}${win ? '' : '<span class="lbl">Full screen</span>'}</button>
+        <button role="radio" data-k="src-display" data-act="source-display" aria-checked="${full}" tabindex="${full ? 0 : -1}" aria-label="Full screen" data-tip="${full ? '' : 'Full screen'}">${icon('monitor')}${full ? '<span class="lbl">Full screen</span>' : ''}</button>
         <button role="radio" data-k="src-window" data-act="source-window" aria-checked="${win}" tabindex="${win ? 0 : -1}" aria-label="Window${win ? `: ${esc(sourceLabel())}` : ''}" data-tip="${win ? 'Pick another window' : 'Window'}">${icon('window')}${win ? `<span class="lbl">${esc(sourceLabel())}</span>` : ''}</button>
+        <button role="radio" data-k="src-camera" data-act="source-camera" aria-checked="${cam}" tabindex="${cam ? 0 : -1}" aria-label="Camera only${cam ? `, ${esc(st.camOnly?.aspect || '16:9')}` : ''}" data-tip="${cam ? '' : 'Camera only · no screen'}">${icon('cam-only')}${cam ? '<span class="lbl">Camera only</span>' : ''}</button>
       </div>
       <span class="gap"></span>
-      <button class="b x-unf ${c.on ? '' : 'off'}" data-k="cam" data-act="camera-toggle" role="switch" aria-checked="${c.on}" aria-label="Camera" data-tip="${c.on ? 'Camera on' : 'Camera off'}">${icon(c.on ? 'camera' : 'camera-off')}</button>
-      <button class="b x-unf ${st.systemAudio ? '' : 'off'}" data-k="audio" data-act="audio-toggle" role="switch" aria-checked="${st.systemAudio}" aria-label="System audio" data-tip="${st.systemAudio ? 'System audio on' : 'System audio off'}">${icon(st.systemAudio ? 'speaker' : 'speaker-off')}</button>
+      ${cam ? '' : `<button class="b x-unf ${c.on ? '' : 'off'}" data-k="cam" data-act="camera-toggle" role="switch" aria-checked="${c.on}" aria-label="Camera" data-tip="${c.on ? 'Camera on' : 'Camera off'}">${icon(c.on ? 'camera' : 'camera-off')}</button>`}
+      ${cam
+        ? `<button class="b x-unf off" data-k="audio" data-act="audio-toggle" role="switch" aria-checked="false" aria-disabled="true" aria-label="System audio, not available in Camera only" data-tip="No system audio in Camera only">${icon('speaker-off')}</button>`
+        : `<button class="b x-unf ${st.systemAudio ? '' : 'off'}" data-k="audio" data-act="audio-toggle" role="switch" aria-checked="${st.systemAudio}" aria-label="System audio" data-tip="${st.systemAudio ? 'System audio on' : 'System audio off'}">${icon(st.systemAudio ? 'speaker' : 'speaker-off')}</button>`}
       <button class="b x-unf ${st.mic.on ? '' : 'off'}" data-k="mic" data-act="mic-toggle" role="switch" aria-checked="${st.mic.on}" aria-label="Microphone" data-tip="${st.mic.on ? 'Microphone on' : 'Microphone off'}">${icon(st.mic.on ? 'mic' : 'mic-off')}</button>
       ${notesBtn()}
       ${cover}
@@ -195,7 +205,9 @@ function recHtml() {
       ${ctl('restart', icon('restart'), 'Restart', 'Z', 'x-unf')}
       ${ctl('cancel', icon('trash'), 'Discard', 'X', 'x-unf')}
       ${notesBtn()}
-      ${snap.cameraOn ? ctl('camera', icon(camOff ? 'camera-off' : 'camera'), camOff ? 'Show camera' : 'Hide camera', 'C', `x-unf ${camOff ? 'off' : ''}`) : ''}`
+      ${snap.cameraOnly
+        ? ctl('camera', icon(snap.cameraHidden ? 'eye-off' : 'eye'), snap.cameraHidden ? 'Show preview' : 'Hide preview', 'C', `x-unf ${snap.cameraHidden ? 'off' : ''}`)
+        : snap.cameraOn ? ctl('camera', icon(camOff ? 'camera-off' : 'camera'), camOff ? 'Show camera' : 'Hide camera', 'C', `x-unf ${camOff ? 'off' : ''}`) : ''}`
     : '';
   if (collapsed()) {
     // Smallest form that still has stop, pause and restart (start is the setup pill's).
@@ -369,7 +381,8 @@ function renderNotice() {
   if (!n) return;
   notice.className = `notice glass ${n.tone === 'bad' ? 'bad' : ''} ${n.wrap ? 'wrap' : ''}`;
   notice.setAttribute('role', n.role || (n.tone === 'bad' ? 'alert' : 'status'));
-  const act = n.kind === 'perm' || n.kind === 'micperm' ? `<button class="act" data-act="${n.kind === 'perm' ? 'screen-settings' : 'mic-settings'}">${esc(n.action)}</button>` : '';
+  const ACT = { perm: 'screen-settings', micperm: 'mic-settings', camperm: 'camera-settings' };
+  const act = ACT[n.kind] ? `<button class="act" data-act="${ACT[n.kind]}">${esc(n.action)}</button>` : '';
   const x = n.dismiss ? `<button class="tx" data-act="${n.kind === 'toast' ? 'dismiss' : 'dismiss-notice'}" data-kind="${n.kind}" aria-label="Dismiss">${icon('x')}</button>` : '';
   notice.innerHTML = `${icon(n.icon || (n.tone === 'bad' ? 'alert' : 'warn'))}<span>${n.html || esc(n.text)}</span>${act}${x}`;
   placeNotice();
@@ -397,10 +410,13 @@ function renderPop() {
 
 function chipMenu() {
   const win = st.source.mode === 'window';
+  const cam = camOnly();
+  const full = !win && !cam;
   pop.setAttribute('role', 'menu');
   pop.setAttribute('aria-label', 'Source');
-  return `<button class="mrow" role="menuitemradio" aria-checked="${!win}" data-act="source-display">${icon('monitor')}<span class="l">Full screen</span>${win ? '' : icon('check', 'ck')}</button>
-    <button class="mrow tall" role="menuitemradio" aria-checked="${win}" data-act="source-window">${icon('window')}<span class="l">Window…<small>${win && setup.window ? esc(setup.window.title) : 'Pick on screen'}</small></span>${win ? icon('check', 'ck') : ''}</button>`;
+  return `<button class="mrow" role="menuitemradio" aria-checked="${full}" data-act="source-display">${icon('monitor')}<span class="l">Full screen</span>${full ? icon('check', 'ck') : ''}</button>
+    <button class="mrow tall" role="menuitemradio" aria-checked="${win}" data-act="source-window">${icon('window')}<span class="l">Window…<small>${win && setup.window ? esc(setup.window.title) : 'Pick on screen'}</small></span>${win ? icon('check', 'ck') : ''}</button>
+    <button class="mrow tall" role="menuitemradio" aria-checked="${cam}" data-act="source-camera">${icon('cam-only')}<span class="l">Camera only<small>${cam ? `${esc(st.camOnly?.aspect || '16:9')} · no screen` : 'Just you, no screen'}</small></span>${cam ? icon('check', 'ck') : ''}</button>`;
 }
 
 function coverPicker() {
@@ -436,12 +452,13 @@ function moreMenu() {
   pop.setAttribute('role', 'menu');
   pop.setAttribute('aria-label', 'More');
   const q = st.quality.size;
-  const pvMore = pvEntries(st.source.mode !== 'window').more;
-  return `<div class="mrow tall">${icon(st.systemAudio ? 'speaker' : 'speaker-off')}<span class="l">System audio<small>Sound from apps. Off by default.</small></span><span class="switch" role="switch" tabindex="0" data-act="audio-toggle" aria-checked="${st.systemAudio}" aria-label="System audio"></span></div>
+  const pvMore = pvEntries(st.source.mode === 'display').more;
+  const cam = camOnly();
+  return `<div class="mrow tall${cam ? ' dim' : ''}">${icon(st.systemAudio && !cam ? 'speaker' : 'speaker-off')}<span class="l">System audio<small>${cam ? 'Needs screen recording: not in Camera only.' : 'Sound from apps. Off by default.'}</small></span><span class="switch" role="switch" tabindex="0" data-act="audio-toggle" aria-checked="${st.systemAudio && !cam}" ${cam ? 'aria-disabled="true"' : ''} aria-label="System audio"></span></div>
     ${micRows()}
     <div class="mrow">${icon('hd')}<span class="l">Size</span><div class="gseg" role="radiogroup" aria-label="Size"><button role="radio" data-act="quality" data-q="1080p" aria-checked="${q !== 'native'}" tabindex="${q !== 'native' ? 0 : -1}">1080p</button><button role="radio" data-act="quality" data-q="native" aria-checked="${q === 'native'}" tabindex="${q === 'native' ? 0 : -1}">Native</button></div></div>
     <div class="mrow"><span class="i" aria-hidden="true"></span><span class="l">Frames</span><div class="gseg" role="radiogroup" aria-label="Frames"><button role="radio" aria-checked="true" tabindex="0">30</button><button role="radio" aria-checked="false" aria-disabled="true" disabled title="60 fps comes later">60</button></div></div>
-    <div class="cost">≈ ${setup.gbPerHour} GB/hour${setup.display ? ` · display ${setup.display.px}` : ''}</div>
+    <div class="cost">≈ ${setup.gbPerHour} GB/hour${cam ? (setup.camOut ? ` · video ${setup.camOut.width}×${setup.camOut.height}` : '') : setup.display ? ` · display ${setup.display.px}` : ''}</div>
     ${pvMore ? `<button class="mrow tall" role="menuitem" data-act="privacy-open" ${pvMore.disabled ? 'aria-disabled="true"' : ''}>${icon(pvMore.icon)}<span class="l">Privacy<small>${pvMore.disabled || `${pvName()}${privacy() === 'standard' ? '' : ` · ${privacyHidden()}`}`}</small></span>${icon('chev-r', 'chev')}</button>` : ''}
     <div class="msep"></div>
     <button class="mrow" role="menuitem" data-act="library">${icon('library')}<span class="l">Recordings</span><span class="k">${cmd('L')}</span></button>
@@ -621,6 +638,7 @@ document.addEventListener('click', (e) => {
       return popKind === a ? closePop() : openPop(a);
     case 'source-display':
     case 'source-window':
+    case 'source-camera':
       popKind = null;
       render();
       return tally.invoke('bar:action', a);
@@ -852,7 +870,7 @@ tally.on('app:session', (s) => {
 });
 // Re-render only when something the bar shows changed: a re-render between a press and
 // its release would replace the button under the pointer and lose the click.
-const shown = (s) => JSON.stringify([s.toolbar.unfolded, s.toolbar.collapsed, s.notes?.open, s.camera.on, s.systemAudio, s.mic, s.cleanDesktop, s.source, s.quality]);
+const shown = (s) => JSON.stringify([s.toolbar.unfolded, s.toolbar.collapsed, s.notes?.open, s.camera.on, s.systemAudio, s.mic, s.cleanDesktop, s.source, s.quality, s.camOnly]);
 tally.on('app:settings', (s) => {
   const folded = st && (s.toolbar.unfolded !== st.toolbar.unfolded || s.toolbar.collapsed !== st.toolbar.collapsed);
   const same = st && shown(s) === shown(st);

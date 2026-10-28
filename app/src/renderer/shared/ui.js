@@ -16,6 +16,8 @@ const SYMBOLS = `
   <symbol id="i-camera-off" viewBox="0 0 24 24"><path d="M10 6h3.5A2.5 2.5 0 0116 8.5v2l5-3v9l-1.6-1M16 16.2V15.5A2.5 2.5 0 0113.5 18H5a2.5 2.5 0 01-2.5-2.5v-7A2.5 2.5 0 015 6"/><path d="M3 3l18 18"/></symbol>
   <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8 20h8M12 16.5V20"/></symbol>
   <symbol id="i-window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9 6.5h.01"/></symbol>
+  <symbol id="i-cam-only" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M6.8 21.5c.8-3 2.8-4.6 5.2-4.6s4.4 1.6 5.2 4.6"/></symbol>
+  <symbol id="i-bubble-size" viewBox="0 0 24 24"><circle cx="8" cy="16" r="4"/><circle cx="14" cy="10" r="7" stroke-dasharray="2.4 2.4"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><rect x="2.5" y="6" width="13.5" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></symbol>
   <symbol id="i-clean" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 21h10M9 8l6 6M15 8l-6 6" opacity="0"/><path d="M14 8.5l2.5-2.5M7.5 14.5l7-7" /></symbol>
   <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/></symbol>

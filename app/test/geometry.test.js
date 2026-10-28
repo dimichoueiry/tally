@@ -8,12 +8,20 @@ test('sizes match DESIGN_SPEC §3.2', () => {
   assert.deepEqual(bubbleSize('portrait', 'M'), { width: 316, height: 420 });
 });
 
-test('window mode steps XL → L → M → S and hides when S does not fit', () => {
+test('preset fit still steps XL → L → M → S', () => {
   assert.equal(fitSize('circle', 'XL', { width: 1000, height: 1000 }), 'XL');
   assert.equal(fitSize('circle', 'XL', { width: 400, height: 400 }), 'L'); // 340 + 48 ≤ 400
   assert.equal(fitSize('circle', 'XL', { width: 300, height: 300 }), 'S');
+});
+
+test('window mode shrinks the bubble continuously and hides it only below the minimum', () => {
   const r = constrainToWindow({ x: 0, y: 0, width: 200, height: 200 }, 'circle', 'S');
-  assert.equal(r.hidden, true);
+  assert.equal(r.hidden, false);
+  assert.deepEqual([r.width, r.height, r.stepped], [152, 152, true]); // 200 − 2 × 24
+  const full = constrainToWindow({ x: 0, y: 0, width: 1000, height: 800 }, 'landscape', 'M');
+  assert.deepEqual([full.width, full.height, full.stepped], [420, 236, false]); // presets keep the spec table
+  assert.equal(constrainToWindow({ x: 0, y: 0, width: 143, height: 600 }, 'circle', 300).hidden, true); // 95 < 96
+  assert.equal(constrainToWindow({ x: 0, y: 0, width: 144, height: 600 }, 'circle', 300).width, 96);
 });
 
 test('window mode keeps the bubble inside with the 24 pt inset and follows the window', () => {

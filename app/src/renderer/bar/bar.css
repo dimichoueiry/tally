@@ -215,3 +215,5 @@ button.mrow:hover, .mrow.hl, .mrow[role=menuitemradio][aria-checked="true"] { ba
 /* A notice with instructions (stale Screen Recording grant): wraps instead of one line */
 .notice.wrap { white-space: normal; max-width: 460px; align-items: flex-start; line-height: 1.45; padding-top: 8px; padding-bottom: 8px; }
 .notice.wrap > .i { margin-top: 1px; }
+.mrow.dim { color: var(--fg-2); }
+.mrow.dim .switch { opacity: .4; }

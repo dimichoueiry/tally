@@ -3,10 +3,11 @@
 import { cropRect, traceShape } from '../../shared/geometry.js';
 import { visionBundle, visionFileset, MODEL_URL } from './vision.js';
 
-export async function openCamera(deviceId) {
+// hiRes (Camera only): the camera's best, up to 4K, so a 9:16 crop can reach 1080×1920.
+export async function openCamera(deviceId, { hiRes = false } = {}) {
   const video = {
-    width: { ideal: 1920 },
-    height: { ideal: 1080 },
+    width: { ideal: hiRes ? 3840 : 1920 },
+    height: { ideal: hiRes ? 2160 : 1080 },
     frameRate: { ideal: 30 },
     ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
   };

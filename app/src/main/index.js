@@ -254,6 +254,13 @@ function registerIpc() {
   h('perm:open', () => perms.openScreenSettings());
   // Reset clears Tally's own Screen Recording entry: the appId the app is packaged with.
   h('perm:reset', () => perms.resetScreenPermission(bundleIdFor(JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')))));
+  // "Use camera only": Camera only records no screen, so setup opens without the grant.
+  h('perm:cameraOnly', () => {
+    settings.patch({ source: { mode: 'camera' }, camera: { on: true } });
+    wins.permission?.hide();
+    broadcastSettings();
+    ctl.openSetup();
+  });
   h('perm:relaunch', () => {
     app.relaunch();
     app.exit(0);
@@ -268,6 +275,8 @@ function registerIpc() {
   h('bubble:camera', (dims) => {
     ctl.camDims = dims;
     wins.camtray.webContents.send('app:camera', dims);
+    ctl._syncTray(); // Camera only: the output size comes from the camera's
+    ctl._broadcast();
   });
   h('bubble:resize', (d) => ctl.bubbleResize(d) && broadcastSettings());
   h('bubble:focusTray', (where) => focusTray(where));
@@ -298,7 +307,8 @@ function registerIpc() {
       stop: () => ctl.stop(), pause: () => ctl.togglePause(), restart: () => ctl.askRestart(), cancel: () => ctl.askCancel(), camera: () => ctl.toggleCamera(),
       keep: () => ctl.keepGoing(), confirm: () => ctl.confirm(), switch: () => ctl.switchToDisplay(), dismiss: () => ctl.dismissToast(),
       record: () => ctl.recordFromSetup(), close: () => ctl.closeSetup(), now: () => ctl._countdownNow(), 'cancel-countdown': () => ctl.cancelCountdown(),
-      'source-display': () => ctl.chooseFullScreen(), 'source-window': () => ctl.startPicker(), 'screen-settings': () => perms.openScreenSettings(),
+      'source-display': () => ctl.chooseFullScreen(), 'source-window': () => ctl.startPicker(), 'source-camera': () => ctl.chooseCameraOnly(arg), 'screen-settings': () => perms.openScreenSettings(),
+      'camera-settings': () => perms.openCameraSettings(),
       'dismiss-notice': () => ctl.dismissNotice(arg), home: () => ctl.barHome(), notes: () => ctl.toggleNotes(),
       'mic-settings': () => perms.openMicSettings(),
     };
@@ -471,6 +481,10 @@ function devControl() {
           if (['recording', 'paused', 'confirm'].includes(ctl.state)) ctl.stop();
           else if (ctl.state === 'idle') ctl.toggleSetup(screen.getPrimaryDisplay().id);
           return out({ cmd, setupOpen: ctl.setupOpen, state: ctl.state });
+        case 'cameraonly': // cameraonly [aspect]: what the toolbar's Camera only button does
+          ctl.chooseCameraOnly(rest[0]);
+          broadcastSettings();
+          return out({ cmd, source: settings.get().source, camOnly: settings.get().camOnly, bubble: ctl.bubbleRect, tray: ctl.trayScreen });
         case 'fakewindows': // fakewindows <json array> | off: stand-in list for the window picker
           ctl.fakeWindows = arg === 'off' ? null : JSON.parse(arg);
           return out({ cmd, n: ctl.fakeWindows?.length ?? 0 });
@@ -506,6 +520,11 @@ function devControl() {
             sel = { kind: 'window', sourceId: w.sourceId, title: w.title };
           }
           if (rest[0] === 'quick') sel = null;
+          if (rest[0] === 'camera') {
+            // record camera [aspect]: Camera only (no screen capture)
+            if (rest[1]) settings.patch({ source: { mode: 'camera' }, camOnly: { aspect: rest[1] } });
+            sel = { kind: 'camera', displayId: screen.getPrimaryDisplay().id };
+          }
           await ctl.start(sel);
           return out({ cmd, target: ctl.target && { kind: ctl.target.kind, label: ctl.target.label, bounds: ctl.target.bounds } });
         }

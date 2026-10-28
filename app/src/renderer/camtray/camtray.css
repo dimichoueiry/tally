@@ -84,3 +84,16 @@
 .imgrow button:hover { color: var(--fg-1); }
 
 @media (prefers-reduced-motion: reduce) { .b, .tseg button, .trk .knob { transition: none; } }
+
+/* Rows and controls that one mode doesn't use (Camera only: no size, shape or off). */
+.ctray [hidden] { display: none !important; }
+/* Bubble size: the zoom slider's look; the value is wider (240×135). */
+.zoom2 .v.wide { width: 64px; }
+/* Camera only: aspect segment (a small frame of that ratio + its name) and the output size. */
+.tseg.aspect button { width: auto; padding: 0 10px 0 8px; font: 600 var(--t-12) var(--font-mono); letter-spacing: .01em; gap: 6px; }
+.ar { display: inline-block; border: 1.5px solid currentColor; border-radius: 2px; box-sizing: border-box; flex: none; }
+.ar-16x9 { width: 16px; height: 9px; }
+.ar-9x16 { width: 9px; height: 16px; }
+.ar-1x1 { width: 12px; height: 12px; }
+.ar-4x5 { width: 11px; height: 14px; }
+.outres { margin-left: auto; padding-right: 6px; font: 500 var(--t-12) var(--font-mono); color: var(--fg-2); font-variant-numeric: tabular-nums; white-space: nowrap; }

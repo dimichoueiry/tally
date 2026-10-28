@@ -39,3 +39,14 @@
 .wrap.resizing .sizechip { opacity: 1; }
 .wrap.resizing .bub-tag, .wrap.resizing .bub-grip { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .sizeh, .sizechip { transition: none; } }
+
+/* Continuous resize: the edge band (rim for a circle) shows the outline while hovered. */
+.wrap.setup.edge .ring { opacity: .7; }
+.sizeh.sm { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+.sizeh.sm svg.i { width: 12px; height: 12px; }
+/* Small bubbles: the hover HUD keeps its buttons only (it may be wider than the bubble). */
+.wrap.tiny .bub-hud .zoom, .wrap.tiny .bub-hud [data-z], .wrap.tiny .bub-hud .sep { display: none; }
+.wrap.tiny .bub-tag { top: 8px; }
+/* Camera only: the preview is fixed (centred) and shows exactly the recorded frame. */
+.wrap.camonly .cam { cursor: default; }
+.wrap.camonly .sizeh, .wrap.camonly .bub-grip { display: none; }

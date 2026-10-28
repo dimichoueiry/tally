@@ -18,9 +18,50 @@ const DIMS = {
   portrait: { S: [248, 330], M: [316, 420], L: [382, 510], XL: [450, 600] },
 };
 
+// Continuous size (camera.diam): the bubble's size as a circle-equivalent diameter in
+// pt. The other shapes scale by the preset table's ratios, so 220 / 280 / 340 / 400 are
+// exactly S / M / L / XL for every shape. BUBBLE_MIN: a face still reads at 96 pt
+// (~130 px in a 1080p video of a 1500 pt-wide display), the 28 pt resize handle and the
+// hover controls still leave most of it visible, and a landscape bubble keeps an 81 pt
+// short side. BUBBLE_MAX is the old XL.
+export const BUBBLE_MIN = 96;
+export const BUBBLE_MAX = 400;
+export const PRESET_DIAM = { S: 220, M: 280, L: 340, XL: 400 };
+const SHAPE_K = { circle: [1, 1], squircle: [1, 1], landscape: [330 / 220, 186 / 220], portrait: [248 / 220, 330 / 220] };
+const shapeK = (shape) => SHAPE_K[shape] || SHAPE_K.circle;
+
+// Diameter for a size: a number (camera.diam) or a preset letter (camera.size, older settings).
+export function diamOf(size) {
+  if (typeof size === 'number' && Number.isFinite(size)) return size;
+  return PRESET_DIAM[size] ?? PRESET_DIAM.S;
+}
+
+// The diameter a camera setting stands for: camera.diam when set, else its preset.
+export function cameraDiam(camera = {}) {
+  return camera.diam != null ? diamOf(Number(camera.diam)) : diamOf(camera.size);
+}
+
 export function bubbleSize(shape, size) {
-  const d = (DIMS[shape] || DIMS.circle)[size] || DIMS.circle.S;
-  return { width: d[0], height: d[1] };
+  if (typeof size !== 'number') {
+    const d = (DIMS[shape] || DIMS.circle)[size] || DIMS.circle.S;
+    return { width: d[0], height: d[1] };
+  }
+  const [kw, kh] = shapeK(shape);
+  return { width: Math.round(size * kw), height: Math.round(size * kh) };
+}
+
+// Largest diameter whose box fits `room` with the 24 pt inset on both sides.
+export function maxDiamFor(shape, room) {
+  const [kw, kh] = shapeK(shape);
+  return Math.floor(Math.min((room.width - 2 * INSET) / kw, (room.height - 2 * INSET) / kh));
+}
+
+// Kept between BUBBLE_MIN and BUBBLE_MAX (and what fits `room`, when given); whole pt.
+// Never below the minimum, even on a screen too small for it.
+export function clampDiam(d, shape = 'circle', room = null) {
+  const hi = Math.min(BUBBLE_MAX, room ? maxDiamFor(shape, room) : BUBBLE_MAX);
+  const v = Number.isFinite(d) ? d : PRESET_DIAM.S;
+  return Math.round(Math.max(BUBBLE_MIN, Math.min(v, hi)));
 }
 
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
@@ -34,17 +75,20 @@ export function fitSize(shape, chosen, room) {
   return null;
 }
 
-// Window mode (D4): keep the bubble inside the recorded window with the inset.
-// `rel` is the bubble's offset from the window's bottom-left corner, so the
-// bubble follows the window when it moves. Returns screen coordinates.
+// Window mode (D4): keep the bubble inside the recorded window with the inset. The
+// size shrinks (continuously) to fit, and the bubble hides when not even BUBBLE_MIN fits.
+// `chosen` is a diameter or a preset letter. `rel` is the bubble's offset from the
+// window's bottom-left corner, so the bubble follows the window when it moves.
+// Returns screen coordinates.
 export function constrainToWindow(win, shape, chosen, rel = { left: INSET, bottom: INSET }) {
-  const size = fitSize(shape, chosen, win);
-  if (!size) return { hidden: true, size: null };
-  const { width, height } = bubbleSize(shape, size);
+  const want = diamOf(chosen);
+  const fit = Math.min(want, maxDiamFor(shape, win));
+  if (fit < BUBBLE_MIN) return { hidden: true, size: null };
+  const { width, height } = fit === want && typeof chosen === 'string' ? bubbleSize(shape, chosen) : bubbleSize(shape, fit);
   const x = clamp(win.x + rel.left, win.x + INSET, win.x + win.width - INSET - width);
   const yFromBottom = clamp(rel.bottom, INSET, win.height - INSET - height);
   const y = win.y + win.height - yFromBottom - height;
-  return { hidden: false, size, x: Math.round(x), y: Math.round(y), width, height, stepped: size !== chosen };
+  return { hidden: false, size: fit, x: Math.round(x), y: Math.round(y), width, height, stepped: fit < want };
 }
 
 export function relToWindow(win, rect) {
@@ -205,8 +249,8 @@ export function sizesThatFit(area, shape) {
   return out;
 }
 
-// Corner resize handle: the size step whose box best matches the pointer's distance
-// from the anchored corner (both axes, scaled to the shape's aspect).
+// Corner resize handle (presets): the size step whose box best matches the pointer's
+// distance from the anchored corner (both axes, scaled to the shape's aspect).
 export function sizeFromDrag(shape, anchorPt, pointer) {
   const dx = Math.abs(pointer.x - anchorPt.x);
   const dy = Math.abs(pointer.y - anchorPt.y);
@@ -224,6 +268,52 @@ export function sizeFromDrag(shape, anchorPt, pointer) {
   return best;
 }
 
+// Continuous resize from an edge or corner: the diameter whose box puts the grabbed
+// edge / corner under the pointer, with the fixed corner at `anchorPt`. `axes` says
+// what was grabbed: { x: true } a left / right edge, { y: true } a top / bottom edge,
+// both a corner (the pointer is projected on the box's diagonal, so moving along
+// either axis resizes smoothly). Unclamped: main clamps (clampDiam).
+export function diamFromDrag(shape, anchorPt, pointer, axes = { x: true, y: true }) {
+  const [kw, kh] = shapeK(shape);
+  const dx = Math.abs(pointer.x - anchorPt.x);
+  const dy = Math.abs(pointer.y - anchorPt.y);
+  if (axes.x && !axes.y) return dx / kw;
+  if (axes.y && !axes.x) return dy / kh;
+  return (dx * kw + dy * kh) / (kw * kw + kh * kh);
+}
+
+// Which part of the bubble box a point (box-local) grabs for resizing: an edge band
+// `band` pt wide. Returns { zx, zy } in -1 / 0 / 1 (left / none / right, top / none /
+// bottom), or null inside the band (that is a drag). Circles use the rim band, and
+// report the nearest of the 8 compass directions.
+export function resizeZone(shape, width, height, pt, band = 10) {
+  if (shape === 'circle') {
+    const r = width / 2;
+    const dx = pt.x - r;
+    const dy = pt.y - height / 2;
+    const d = Math.hypot(dx, dy);
+    if (d < r - band || d > r + 2) return null;
+    const a = Math.atan2(dy, dx);
+    const oct = Math.round(a / (Math.PI / 4));
+    const zx = Math.round(Math.cos(oct * (Math.PI / 4)));
+    const zy = Math.round(Math.sin(oct * (Math.PI / 4)));
+    return { zx, zy };
+  }
+  if (pt.x < -2 || pt.y < -2 || pt.x > width + 2 || pt.y > height + 2) return null;
+  const zx = pt.x <= band ? -1 : pt.x >= width - band ? 1 : 0;
+  const zy = pt.y <= band ? -1 : pt.y >= height - band ? 1 : 0;
+  return zx || zy ? { zx, zy } : null;
+}
+
+// The corner kept fixed while a zone is dragged: the side opposite the grabbed one;
+// along an axis that wasn't grabbed, the bubble's screen anchor.
+export function anchorForZone(zone, screenAnchor) {
+  return {
+    h: zone.zx === 1 ? 'left' : zone.zx === -1 ? 'right' : screenAnchor.h,
+    v: zone.zy === 1 ? 'top' : zone.zy === -1 ? 'bottom' : screenAnchor.v,
+  };
+}
+
 // Where the resize handle sits: the corner opposite the anchor (for a circle, on
 // the rim at 45°). Returned relative to the bubble box, as the handle's centre.
 export function handlePoint(shape, width, height, anchor) {
@@ -231,4 +321,40 @@ export function handlePoint(shape, width, height, anchor) {
   const x = anchor.h === 'left' ? width * (1 - k) : width * k;
   const y = anchor.v === 'bottom' ? height * k : height * (1 - k);
   return { x: Math.round(x), y: Math.round(y) };
+}
+
+// ───────── camera only (no screen) ─────────
+
+// Output aspect ratios for Camera only, as width / height.
+export const ASPECTS = { '16:9': 16 / 9, '9:16': 9 / 16, '1:1': 1, '4:5': 4 / 5 };
+export const ASPECT_KEYS = Object.keys(ASPECTS);
+export const aspectOf = (key) => ASPECTS[key] || ASPECTS['16:9'];
+
+// Output size for Camera only: the social sizes (9:16 → 1080×1920, 1:1 → 1080×1080,
+// 4:5 → 1080×1350, 16:9 → 1920×1080), whatever the camera gives: TikTok / Reels / IG
+// expect them, so a 1080p webcam's 9:16 crop (606×1080) is scaled up. 'native' keeps a
+// bigger camera's own pixels (short side above 1080). Even numbers (H.264).
+export function cameraOutputSize(camW, camH, aspectKey, quality = '1080p') {
+  const c = cropRect(camW, camH, aspectOf(aspectKey), 1);
+  const short = quality === 'native' ? Math.max(1080, Math.min(c.sw, c.sh)) : 1080;
+  const k = short / Math.min(c.sw, c.sh);
+  const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+  return { width: even(c.sw * k), height: even(c.sh * k) };
+}
+
+// Setup preview for Camera only (SETUP_V2-style tray under it): as large as the work area
+// allows with room left for the tray and the toolbar under it, centred. In pt.
+export function cameraPreviewRect(wa, aspectKey, { trayH = 120, barRoom = 56 + 2 * 16 } = {}) {
+  const a = aspectOf(aspectKey);
+  const maxW = Math.min(wa.width - 2 * INSET, Math.round(wa.width * 0.62));
+  const maxH = wa.height - 2 * INSET - TRAY_GAP - trayH - barRoom;
+  let w = maxW;
+  let h = w / a;
+  if (h > maxH) {
+    h = maxH;
+    w = h * a;
+  }
+  w = Math.max(2, Math.round(w));
+  h = Math.max(2, Math.round(h));
+  return { x: Math.round(wa.x + (wa.width - w) / 2), y: Math.round(wa.y + INSET + Math.max(0, maxH - h) / 2), width: w, height: h };
 }

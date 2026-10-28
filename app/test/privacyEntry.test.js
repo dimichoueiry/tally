@@ -29,7 +29,7 @@ test('no cover helper (not macOS): no privacy entry anywhere; unknown levels rea
 
 test('toolbar wiring: swatch says "Desktop cover & privacy", popover has a Privacy heading, icon and row open it', () => {
   const src = fs.readFileSync(new URL('../src/renderer/bar/bar.js', import.meta.url), 'utf8');
-  assert.match(src, /data-tip="\$\{win \? 'No cover in Window mode' : 'Desktop cover &amp; privacy'\}"/);
+  assert.match(src, /data-tip="\$\{win \? 'No cover in Window mode' : cam \? 'No desktop in Camera only' : 'Desktop cover &amp; privacy'\}"/);
   assert.match(src, /aria-label="Desktop cover &amp; privacy:/);
   assert.match(src, /<h4 class="pvh" id="pvHead">Privacy /);
   assert.equal((src.match(/data-act="privacy-open"/g) || []).length, 2); // folded icon + More row

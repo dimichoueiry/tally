@@ -1,10 +1,11 @@
 // Bubble tray (SETUP_V2 §11, mockup 14), docked under the bubble during setup only.
-// Row 1, how big: size S/M/L/XL · zoom. Row 2, how it looks: shape | background ·
-// camera settings · camera off. Row 3: Follow me · Mirror switches. Never recorded (content
+// Row 1, how big: bubble size, continuous (S/M/L/XL are detents). Row 2: zoom. Row 3, how
+// it looks: shape | background · camera settings · camera off. Row 4: Follow me · Mirror.
+// Camera only: row 1 is the aspect ratio and the output's resolution; no shape, no off. Never recorded (content
 // protection, windows.js) and never starts a bubble drag: it is a separate window
 // with no drag code, so hovering or pressing it can only change settings.
 import { installIcons, icon, esc } from '../shared/ui.js';
-import { SHAPES, SIZES, ZOOM_DETENTS, ZOOM_MAX, bubbleSize, maxZoom, snapZoom } from '../../shared/geometry.js';
+import { SHAPES, ZOOM_DETENTS, ZOOM_MAX, BUBBLE_MIN, BUBBLE_MAX, PRESET_DIAM, ASPECT_KEYS, bubbleSize, maxZoom, snapZoom, cameraDiam } from '../../shared/geometry.js';
 import { BUILTIN, builtinThumb } from '../shared/bg/images.js';
 
 const tally = window.tally;
@@ -22,13 +23,15 @@ const userBg = (name) => `app://tally/user/backgrounds/${encodeURIComponent(name
 const cleanLabel = (l) => String(l || '').replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i, '');
 
 let st = null; // settings
-let view = { visible: false, mode: 'tray', popSide: 'right', sizeFits: null, camera: 'granted', camDims: null };
+let view = { visible: false, mode: 'tray', popSide: 'right', minDiam: BUBBLE_MIN, maxDiam: BUBBLE_MAX, cameraOnly: false, camOut: null, camera: 'granted', camDims: null };
+const strk = $('sizeTrk');
 let devices = [];
 let popKind = null; // null | 'settings' | 'image'
 
 $('settingsBtn').innerHTML = icon('sliders');
 $('offBtn').innerHTML = icon('power');
-document.querySelector('.zoom2 .zi').innerHTML = icon('zoom-in');
+document.querySelector('#zoomTrk').parentElement.querySelector('.zi').innerHTML = icon('zoom-in');
+$('sizeIcon').innerHTML = icon('bubble-size');
 $('dets').innerHTML = ZOOM_DETENTS.map((d) => `<i class="det" style="left:${((d - 1) / (ZOOM_MAX - 1)) * 100}%"></i>`).join('');
 
 const camMax = () => (view.camDims ? maxZoom(view.camDims.width, view.camDims.height) : ZOOM_MAX);
@@ -67,13 +70,17 @@ function draw() {
   if (isTray) {
     tray.style.width = `${view.width}px`;
     renderZoom(c.zoom);
-    $('shapes').innerHTML = SHAPES.map((s) => radio('shape', s, c.shape === s, icon(SHAPE[s][0]), SHAPE[s][1])).join('');
-    $('sizes').innerHTML = SIZES.map((s) => {
-      const d = bubbleSize(c.shape, s);
-      const fits = view.sizeFits?.[s] !== false || c.size === s;
-      const label = fits ? `Size ${s} · ${d.width === d.height ? `${d.width} pt` : `${d.width}×${d.height}`}` : 'Too big for this screen';
-      return radio('size', s, c.size === s, s, label, !fits);
-    }).join('');
+    const co = !!view.cameraOnly;
+    $('sizeRow').hidden = co;
+    $('aspectRow').hidden = !co;
+    $('shapes').hidden = co;
+    $('shapeSep').hidden = co;
+    $('offBtn').hidden = co;
+    if (co) renderAspect();
+    else {
+      renderSize(sizeDiam());
+      $('shapes').innerHTML = SHAPES.map((s) => radio('shape', s, c.shape === s, icon(SHAPE[s][0]), SHAPE[s][1])).join('');
+    }
     $('bgs').innerHTML = BG.map(([k, ic, n]) => radio('bg', k, (c.background || 'none') === k, icon(ic), n)).join('');
     $('settingsBtn').setAttribute('aria-expanded', String(popKind === 'settings'));
     $('followBtn').setAttribute('aria-checked', String(!!c.follow));
@@ -100,6 +107,56 @@ function renderZoom(z) {
   trk.setAttribute('aria-valuenow', String(z));
   trk.setAttribute('aria-valuemax', String(max));
   trk.setAttribute('aria-valuetext', `${fmtZoom(z)}${max < ZOOM_MAX ? `, maximum ${fmtZoom(max)} for this camera` : ''}`);
+}
+
+// ───────── size slider (continuous) ─────────
+
+const sizeLo = () => view.minDiam || BUBBLE_MIN;
+const sizeHi = () => Math.max(sizeLo() + 1, view.maxDiam || BUBBLE_MAX);
+const sizeDiam = () => Math.min(Math.max(cameraDiam(st.camera), sizeLo()), sizeHi());
+const sizePct = (d) => ((d - sizeLo()) / (sizeHi() - sizeLo())) * 100;
+const sizeLabel = (d) => {
+  const b = bubbleSize(st.camera.shape, d);
+  return b.width === b.height ? `${b.width} pt` : `${b.width}×${b.height}`;
+};
+const PRESET_NAMES = Object.entries(PRESET_DIAM); // [['S', 220], …]
+
+function renderSize(d) {
+  const p = sizePct(d);
+  $('sfill').style.width = `${p}%`;
+  $('sknob').style.left = `${p}%`;
+  $('sv').textContent = sizeLabel(d);
+  $('sdets').innerHTML = PRESET_NAMES.filter(([, v]) => v > sizeLo() && v <= sizeHi()).map(([k, v]) => `<i class="det" title="${k}" style="left:${sizePct(v)}%"></i>`).join('');
+  strk.setAttribute('aria-valuemin', String(sizeLo()));
+  strk.setAttribute('aria-valuemax', String(sizeHi()));
+  strk.setAttribute('aria-valuenow', String(d));
+  const preset = PRESET_NAMES.find(([, v]) => v === d)?.[0];
+  strk.setAttribute('aria-valuetext', `${sizeLabel(d)}${preset ? `, size ${preset}` : ''}`);
+}
+
+// Snaps to an S/M/L/XL detent within 4 pt, else whole pt; never outside the range.
+function snapDiam(d) {
+  const det = PRESET_NAMES.find(([, v]) => Math.abs(v - d) <= 4);
+  return Math.round(Math.min(Math.max(det ? det[1] : d, sizeLo()), sizeHi()));
+}
+
+function setDiam(d) {
+  d = snapDiam(d);
+  renderSize(d);
+  if (d === cameraDiam(st.camera)) return;
+  st.camera.diam = d;
+  tally.invoke('app:setSettings', { camera: { diam: d } });
+}
+
+// ───────── Camera only: aspect + output ─────────
+
+const ASPECT_LABEL = { '16:9': 'Landscape 16:9', '9:16': 'Vertical 9:16 (TikTok, Reels)', '1:1': 'Square 1:1', '4:5': 'Portrait 4:5' };
+function renderAspect() {
+  const cur = st.camOnly?.aspect || '16:9';
+  $('aspects').innerHTML = ASPECT_KEYS.map((k) => radio('aspect', k, k === cur, `<span class="ar ar-${k.replace(':', 'x')}" aria-hidden="true"></span>${k}`, ASPECT_LABEL[k])).join('');
+  const o = view.camOut;
+  $('outres').textContent = o ? `${o.width}×${o.height}` : '';
+  $('outres').title = o ? `The video is ${o.width}×${o.height} at 30 fps` : '';
 }
 
 function renderPill() {
@@ -187,7 +244,7 @@ box.addEventListener('click', async (e) => {
     popKind = null;
     save({ camera: { on: false } });
   } else if (d.shape) save({ camera: { shape: d.shape } });
-  else if (d.size) save({ camera: { size: d.size } });
+  else if (d.aspect) save({ camOnly: { aspect: d.aspect } });
   else if (d.bg) {
     // Image opens its picker; choosing Image again toggles it.
     if (d.bg === 'image') popKind = st.camera.background === 'image' && popKind === 'image' ? null : 'image';
@@ -257,6 +314,48 @@ trk.addEventListener('keydown', (e) => {
 });
 $('zv').addEventListener('dblclick', () => setZoom(1));
 
+// ───────── size slider: pointer + keyboard ─────────
+
+let sDrag = null;
+function diamAt(clientX) {
+  const r = strk.getBoundingClientRect();
+  return sizeLo() + ((clientX - r.left) / r.width) * (sizeHi() - sizeLo());
+}
+strk.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  strk.focus({ focusVisible: false });
+  strk.setPointerCapture(e.pointerId);
+  sDrag = e.pointerId;
+  strk.classList.add('dragging');
+  setDiam(diamAt(e.clientX));
+});
+strk.addEventListener('pointermove', (e) => {
+  if (sDrag !== e.pointerId) return;
+  if (!(e.buttons & 1)) return endSize(); // release was lost
+  setDiam(diamAt(e.clientX));
+});
+function endSize() {
+  sDrag = null;
+  strk.classList.remove('dragging');
+}
+strk.addEventListener('pointerup', endSize);
+strk.addEventListener('pointercancel', endSize);
+strk.addEventListener('lostpointercapture', endSize);
+strk.addEventListener('keydown', (e) => {
+  const d = sizeDiam();
+  const step = e.shiftKey ? 40 : 8;
+  const next = { ArrowRight: d + step, ArrowUp: d + step, ArrowLeft: d - step, ArrowDown: d - step, Home: sizeLo(), End: sizeHi(), PageUp: d + 40, PageDown: d - 40 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  // Keys never snap to a detent: each press moves.
+  const v = Math.round(Math.min(Math.max(next, sizeLo()), sizeHi()));
+  renderSize(v);
+  if (v === cameraDiam(st.camera)) return;
+  st.camera.diam = v;
+  tally.invoke('app:setSettings', { camera: { diam: v } });
+});
+
 // ───────── keyboard: roving radio groups, Tab ring through tray + bubble, Esc ─────────
 
 box.addEventListener('keydown', (e) => {
@@ -290,7 +389,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key !== 'Tab') return;
-  // Order follows the rows (SETUP_V2 §11): size → zoom → shape → background →
+  // Order follows the rows (SETUP_V2 §11): size (or aspect) → zoom → shape → background →
   // settings → camera off → Follow me → Mirror → bubble.
   const stops = tabStops();
   const i = stops.indexOf(document.activeElement);
@@ -319,7 +418,7 @@ function hit(x, y) {
   return false;
 }
 document.addEventListener('mousemove', (e) => {
-  const v = hit(e.clientX, e.clientY) || zDrag !== null;
+  const v = hit(e.clientX, e.clientY) || zDrag !== null || sDrag !== null;
   if (v === inside) return;
   inside = v;
   tally.invoke('camtray:mouse', v);
@@ -333,6 +432,7 @@ tally.on('camtray:state', (v) => {
   if (!v.visible) {
     popKind = null;
     endZoom();
+    endSize();
     inside = false;
   }
   if (v.visible && !wasVisible) loadDevices().then(render);

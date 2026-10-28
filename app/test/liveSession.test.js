@@ -112,3 +112,18 @@ test('the session folder deleted mid-recording: the writer recreates it and the 
     }
   }
 });
+
+test('the scripted verification launch (sandbox userData + library) never resolves to the real ~/Movies/Tally', async () => {
+  const { DEFAULTS } = await import('../src/main/settings.js');
+  const real = DEFAULTS.libraryDir; // this machine's real folder (~/Movies/Tally)
+  const ud = path.join(os.tmpdir(), 'tally-verify', 'userdata');
+  for (const env of [{ TALLY_USER_DATA: ud }, { TALLY_USER_DATA: ud, TALLY_LIBRARY_DIR: path.join(os.tmpdir(), 'tally-verify', 'library') }]) {
+    // whatever the saved settings say (even the real folder), the instance gets its own
+    for (const saved of [real, undefined, path.join(real, '..', 'Tally')]) {
+      const b = bootLibraryDir({ env, userData: ud, saved, defaultDir: real });
+      const rel = path.relative(path.resolve(real), path.resolve(b.dir));
+      assert.ok(rel.startsWith('..') || path.isAbsolute(rel), `${b.dir} is inside the real folder`);
+      assert.ok(path.resolve(b.dir).startsWith(path.resolve(os.tmpdir())), b.dir);
+    }
+  }
+});

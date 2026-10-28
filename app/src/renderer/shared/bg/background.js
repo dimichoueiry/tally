@@ -40,7 +40,10 @@ function probeDelegate() {
 
 export class CameraBackground {
   // onStatus(status): 'loading' | 'ready' | 'paused' | 'failed'
-  constructor({ onStatus = () => {}, log = () => {} } = {}) {
+  // maxSide: the largest side composited (Camera only passes its output size; the bubble
+  // keeps MAX_SIDE).
+  constructor({ onStatus = () => {}, log = () => {}, maxSide = MAX_SIDE } = {}) {
+    this.maxSide = maxSide;
     this.onStatus = onStatus;
     this.log = log;
     this.mode = 'none';
@@ -167,7 +170,7 @@ export class CameraBackground {
   process(video, { width, height, zoom, centre }) {
     if (this.mode === 'none' || this.status !== 'ready' || !video.videoWidth) return null;
     const t0 = performance.now();
-    const s = Math.min(1, MAX_SIDE / Math.max(width, height));
+    const s = Math.min(1, this.maxSide / Math.max(width, height));
     const W = Math.max(2, Math.round(width * s));
     const H = Math.max(2, Math.round(height * s));
     if (this.crop.width !== W || this.crop.height !== H) {

@@ -10,7 +10,7 @@ import { imagePath } from './images.js';
 import { initial, transition, elapsedMs, primaryAction } from './session/machine.js';
 import { SegmentWriter, sessionsRoot, finalizeSession } from './session/segments.js';
 import { defaultBaseName, sourceLabel, splitExt } from './library/names.js';
-import { bubbleSize, constrainToWindow, relToWindow, snapRect, clampRect, defaultBubbleRect, INSET, anchorFor, resizeAnchored, trayRect, sizesThatFit, SIZES, TRAY_MIN_W } from '../shared/geometry.js';
+import { bubbleSize, constrainToWindow, relToWindow, snapRect, clampRect, defaultBubbleRect, INSET, anchorFor, resizeAnchored, trayRect, TRAY_MIN_W, cameraDiam, clampDiam, maxDiamFor, BUBBLE_MIN, BUBBLE_MAX, cameraPreviewRect, cameraOutputSize } from '../shared/geometry.js';
 import { screenStatus } from './permissions.js';
 import { isStaleGrant, STALE_GRANT_TEXT } from './permAdvice.js';
 import { findSource, screenSourceForDisplay, displayUnderPointer, displayInfo } from './sources.js';
@@ -100,6 +100,7 @@ export class Controller {
       bgStatus: this.bgStatus,
       labelled: this.settings.get().recordingsMade < 3,
       target: this.target && { kind: this.target.kind, label: this.target.label },
+      cameraOnly: this._cameraMode(),
     };
   }
 
@@ -144,7 +145,13 @@ export class Controller {
   // `sel`: { kind: 'display', displayId } | { kind: 'window', sourceId, title } | null (⌥⇧R quick start)
   async start(sel = null) {
     if (this.s.state !== 'idle') return;
-    if (screenStatus() !== 'granted') return this.onPermissionNeeded();
+    // Camera only records no screen: it never needs (or asks for) Screen Recording.
+    const cameraOnly = sel ? sel.kind === 'camera' : this.settings.get().source.mode === 'camera';
+    if (!cameraOnly && screenStatus() !== 'granted') return this.onPermissionNeeded();
+    if (cameraOnly && this._cameraBlocked()) {
+      this.lastError = 'Camera is off for Tally.';
+      return this.onBlocked?.();
+    }
     // Under 1 GB free nothing starts, ⌥⇧R included (spec §3.1, §3.8).
     if (diskPreflight(this._freeBytes(), this.settings.get().quality.size).level === 'block') {
       this.lastError = 'Less than 1 GB free. Free up space to record.';
@@ -194,7 +201,8 @@ export class Controller {
 
   toggleCamera() {
     if (!LIVE.has(this.s.state) && this.s.state !== 'countdown') return;
-    if (!this.settings.get().camera.on) return;
+    // Camera only: hides / shows the preview; the recording keeps the camera.
+    if (!this.settings.get().camera.on && !this._cameraMode()) return;
     this.cameraHidden = !this.cameraHidden;
     this._syncBubble();
     this._broadcast();
@@ -221,6 +229,13 @@ export class Controller {
 
   async _resolveTarget(sel) {
     const st = this.settings.get();
+    if (!sel && st.source.mode === 'camera') sel = { kind: 'camera' }; // ⌥⇧R in Camera only
+    if (sel?.kind === 'camera') {
+      // The display only says where the preview, countdown and bar go.
+      const d = sel.displayId != null ? screen.getAllDisplays().find((x) => String(x.id) === String(sel.displayId)) || displayUnderPointer() : this._inSetup() ? this._setupDisplay() : displayUnderPointer();
+      const aspect = st.camOnly.aspect;
+      return { kind: 'camera', source: null, aspect, label: sourceLabel({ kind: 'camera', aspect }), display: displayInfo(d), bounds: null };
+    }
     if (!sel && st.source.mode === 'window' && st.source.windowSourceId) {
       // ⌥⇧R in Window mode: the last window if it is still open (spec §3.1).
       const src = await findSource(st.source.windowSourceId);
@@ -265,7 +280,7 @@ export class Controller {
     this._syncBubble();
     // Clean desktop goes up with the countdown, so the frame and tag show the real result.
     this.coverReady = this._showCover();
-    this.onCaptureSource(this.target.source, this.settings.get().systemAudio);
+    if (this.target.kind !== 'camera') this.onCaptureSource(this.target.source, this.settings.get().systemAudio);
     this.engineReady = this._prepareEngine();
     this.engineReady.catch(() => {}); // awaited (and reported) when the countdown ends
     this._checkNotesForRecording().catch((e) => this.log(`notes check failed: ${e.message}`));
@@ -279,11 +294,13 @@ export class Controller {
     const win = this.wins.countdown;
     win.setBounds(display.bounds);
     const q = this.settings.get().quality.size === 'native' ? 'Native' : '1080p';
-    const local = kind === 'window' && bounds ? { x: bounds.x - display.bounds.x, y: bounds.y - display.bounds.y, width: bounds.width, height: bounds.height } : null;
+    // Camera only: the frame goes round the preview (what records).
+    const r = kind === 'window' ? bounds : kind === 'camera' && this._bubbleVisible() ? this.bubbleRect : null;
+    const local = r ? { x: r.x - display.bounds.x, y: r.y - display.bounds.y, width: r.width, height: r.height } : null;
     win.webContents.send('countdown:show', {
       kind,
       rect: local,
-      tag: kind === 'display' ? `${display.name === 'Built-in' ? 'Built-in display' : display.name} · ${q}` : label,
+      tag: kind === 'display' ? `${display.name === 'Built-in' ? 'Built-in display' : display.name} · ${q}` : kind === 'camera' ? `Camera only · ${this.target.aspect} · ${q}` : label,
       ms: COUNTDOWN_MS,
     });
     win.showInactive();
@@ -351,9 +368,11 @@ export class Controller {
       kind: this.target.kind,
       quality: st.quality.size,
       captureScale: this.target.display.scale,
-      systemAudio: st.systemAudio,
+      // No screen capture in Camera only, so no system audio either (it rides on it).
+      systemAudio: this.target.kind !== 'camera' && st.systemAudio,
       mic: st.mic,
-      camera: { on: st.camera.on, deviceId: st.camera.deviceId },
+      camera: { on: st.camera.on || this.target.kind === 'camera', deviceId: st.camera.deviceId },
+      aspect: this.target.kind === 'camera' ? this.target.aspect : null,
       bubble: this._bubbleForEngine(),
       mask,
     }).then((r) => {
@@ -501,7 +520,8 @@ export class Controller {
       // Screen keeps recording; the video loses the bubble from now (spec §3.8).
       this.cameraLost = true;
       const name = (ev.label || 'Camera').replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, '').replace(/ Camera$/, '');
-      this._toast({ kind: 'camera', icon: 'unplug', title: `${name} disconnected.`, text: 'Screen is still recording. Reconnect to bring the camera back.' });
+      const text = this.target?.kind === 'camera' ? 'Still recording, a dark frame until it is back. Reconnect it, or stop.' : 'Screen is still recording. Reconnect to bring the camera back.';
+      this._toast({ kind: 'camera', icon: 'unplug', title: `${name} disconnected.`, text, sticky: this.target?.kind === 'camera' });
     }
     if (ev.type === 'camera-back' && this.s.state !== 'idle') {
       this.cameraLost = false;
@@ -718,7 +738,7 @@ export class Controller {
   // tray, and the cover right away (S4).
   openSetup(displayId) {
     if (this.s.state !== 'idle') return;
-    if (screenStatus() !== 'granted') return this.onPermissionNeeded();
+    if (screenStatus() !== 'granted' && this.settings.get().source.mode !== 'camera') return this.onPermissionNeeded();
     const all = screen.getAllDisplays();
     const d = all.find((x) => String(x.id) === String(displayId)) || screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
     this.setupOpen = true;
@@ -757,6 +777,11 @@ export class Controller {
 
   // Why Record is disabled right now, said next to it (SETUP_V2 §1 banners table).
   _recordWhy() {
+    if (this.settings.get().source.mode === 'camera') {
+      if (this._cameraBlocked()) return 'Camera is off for Tally.';
+      if (diskPreflight(this._freeBytes(), this.settings.get().quality.size).level === 'block') return 'Less than 1 GB free. Free up space to record.';
+      return null;
+    }
     if (screenStatus() !== 'granted') return 'Screen Recording is off for Tally.';
     if (diskPreflight(this._freeBytes(), this.settings.get().quality.size).level === 'block') return 'Less than 1 GB free. Free up space to record.';
     if (this.settings.get().source.mode === 'window' && !this.setupWindow) return 'Pick a window to record.';
@@ -765,7 +790,9 @@ export class Controller {
 
   // One glass notice line above the toolbar: the most important one only.
   _notice() {
-    if (screenStatus() !== 'granted') return { kind: 'perm', tone: 'bad', text: 'Screen Recording is off for Tally.', action: 'Open Settings' };
+    const camOnly = this.settings.get().source.mode === 'camera';
+    if (camOnly && this._cameraBlocked()) return { kind: 'camperm', tone: 'bad', icon: 'camera-off', text: 'Camera is off for Tally. Camera only needs it.', action: 'Open Settings' };
+    if (!camOnly && screenStatus() !== 'granted') return { kind: 'perm', tone: 'bad', text: 'Screen Recording is off for Tally.', action: 'Open Settings' };
     const st = this.settings.get();
     const free = this._freeBytes();
     const d = diskPreflight(free, st.quality.size, st.systemAudio || st.mic.on);
@@ -798,13 +825,14 @@ export class Controller {
       coverAvailable: this.cover.available(),
       display: d ? { px: `${Math.round(d.size.width * d.scaleFactor)}×${Math.round(d.size.height * d.scaleFactor)}` } : null,
       gbPerHour: st.quality.size === 'native' ? 5.4 : 2.7, // 12 / 6 Mbit/s targets
+      camOut: st.source.mode === 'camera' && this.camDims ? cameraOutputSize(this.camDims.width, this.camDims.height, st.camOnly.aspect, st.quality.size) : null,
     };
   }
 
   recordFromSetup() {
     if (!this._inSetup() || this._recordWhy()) return;
     const st = this.settings.get();
-    const sel = st.source.mode === 'window' && this.setupWindow ? { kind: 'window', sourceId: this.setupWindow.sourceId, title: this.setupWindow.title } : { kind: 'display', displayId: this.setupDisplayId };
+    const sel = st.source.mode === 'camera' ? { kind: 'camera', displayId: this.setupDisplayId } : st.source.mode === 'window' && this.setupWindow ? { kind: 'window', sourceId: this.setupWindow.sourceId, title: this.setupWindow.title } : { kind: 'display', displayId: this.setupDisplayId };
     return this.start(sel);
   }
 
@@ -962,6 +990,7 @@ export class Controller {
   // the window under the pointer; a click picks it. Esc goes back.
   async startPicker() {
     if (!this._inSetup()) return;
+    if (!this.picking) this.modeBeforePick = this.settings.get().source.mode;
     this.settings.patch({ source: { mode: 'window' } });
     this._showCover(); // no cover in Window mode: nothing of the desktop records
     const d = this._setupDisplay();
@@ -999,9 +1028,10 @@ export class Controller {
   cancelPicker() {
     if (!this.picking) return;
     this.picking = false;
-    if (!this.setupWindow) this.settings.patch({ source: { mode: 'display' } });
+    if (!this.setupWindow) this.settings.patch({ source: { mode: this.modeBeforePick === 'camera' ? 'camera' : 'display' } });
     this._showPicked();
     this._showCover();
+    this._syncBubble();
     this.onSettings(); // the toolbar's chip / source group follow the mode
     this._broadcast();
     this.wins.bar.focus();
@@ -1017,6 +1047,26 @@ export class Controller {
     this._syncBubble();
     this.onSettings(); // the toolbar's chip / source group follow the mode
     this._broadcast();
+  }
+
+  // Camera only (no screen): the bubble becomes a large preview of exactly what records,
+  // the tray picks the aspect ratio. The camera is switched on (there is nothing else to
+  // record), and no cover: nothing of the desktop records.
+  chooseCameraOnly(aspect) {
+    this.picking = false;
+    this.settings.patch({ source: { mode: 'camera' }, camera: { on: true }, ...(aspect ? { camOnly: { aspect } } : {}) });
+    this._stopWatch();
+    this._hidePicker();
+    this._showCover();
+    this._syncBubble();
+    this.onSettings();
+    this._broadcast();
+  }
+
+  // Camera only, now: in a session, the recorded kind; in setup, the chosen mode.
+  _cameraMode() {
+    if (this.s.state !== 'idle') return this.target?.kind === 'camera';
+    return this._inSetup() && this.settings.get().source.mode === 'camera';
   }
 
   // Picked: the ring stays on the window and a ✓ chip sits outside its top edge (06b).
@@ -1186,6 +1236,8 @@ export class Controller {
 
   _bubbleVisible() {
     const st = this.settings.get();
+    // Camera only: the preview shows unless hidden (⌥⇧C); it never leaves the recording.
+    if (this._cameraMode()) return this.s.state === 'idle' ? !this._cameraBlocked() : !this.cameraHidden;
     if (!st.camera.on) return false;
     if (LIVE.has(this.s.state) || this.s.state === 'countdown') return !this.cameraHidden && !this.autoHidden;
     return this._inSetup() && !this._cameraBlocked();
@@ -1236,12 +1288,20 @@ export class Controller {
   // Recomputes the bubble rect from settings + mode, moves the window, informs the engine.
   _syncBubble() {
     const st = this.settings.get();
-    const { shape, size, zoom } = st.camera;
+    const { zoom } = st.camera;
+    const camOnly = this._cameraMode();
+    // Camera only: the preview frame (no shape: the video is the whole frame).
+    const shape = camOnly ? 'frame' : st.camera.shape;
+    // The size the user chose, continuous (geometry.js cameraDiam), kept to what fits.
+    const size = camOnly ? null : clampDiam(cameraDiam(st.camera), shape, this._bubbleArea());
     let rect;
     let effSize = size;
     let anchor = null;
     this.autoHidden = false;
-    if (this._windowMode()) {
+    if (camOnly) {
+      // Centred, with room for the tray and the toolbar under it; never saved.
+      rect = cameraPreviewRect(this._displayArea(), st.camOnly.aspect, { trayH: this.trayBox.height });
+    } else if (this._windowMode()) {
       const r = constrainToWindow(this.winBounds, shape, size, st.bubbleRelWindow || { left: INSET, bottom: INSET });
       if (r.hidden) this.autoHidden = true;
       else {
@@ -1276,7 +1336,9 @@ export class Controller {
     // clipped growing or shrinking; the renderer scales it, then the window trims.
     // The corner handle snaps live instead (resizeAnchor set), as does a shape change.
     const prevLook = this.setupLook;
-    const animate = rect && visible && this._inSetup() && !this.resizeAnchor && prevLook?.shape === shape && prevLook.size !== effSize;
+    // Only a jump animates (⌘+ / ⌘−, a click far along the slider): a dragged slider or
+    // edge moves in small steps and follows the pointer directly.
+    const animate = rect && visible && this._inSetup() && !camOnly && !this.resizeAnchor && prevLook?.shape === shape && Math.abs(prevLook.size - effSize) >= 40;
     const frame = animate ? unionRect(prevLook.rect, rect) : rect;
     this.setupLook = rect && this._inSetup() ? { shape, size: effSize, rect } : null;
     clearTimeout(this.sizeAnim);
@@ -1297,6 +1359,8 @@ export class Controller {
       offset: frame && rect ? { x: rect.x - frame.x, y: rect.y - frame.y } : { x: 0, y: 0 },
       animFrom: animate ? { width: prevLook.rect.width, height: prevLook.rect.height } : null,
       anchor: anchor || (rect ? anchorFor(this._bubbleArea(), rect) : null),
+      cameraOnly: camOnly,
+      aspect: camOnly ? st.camOnly.aspect : null,
       setup: this._inSetup(),
       live: this.s.state !== 'idle',
       focusable: this.s.state === 'idle',
@@ -1328,7 +1392,8 @@ export class Controller {
       return;
     }
     const full = this._displayArea();
-    const mode = !st.camera.on ? 'off' : this._cameraBlocked() ? 'blocked' : 'tray';
+    const camOnly = this._cameraMode();
+    const mode = camOnly ? (this._cameraBlocked() ? 'blocked' : 'tray') : !st.camera.on ? 'off' : this._cameraBlocked() ? 'blocked' : 'tray';
     let box;
     if (mode === 'tray') box = trayRect(full, rect, Math.max(rect.width, this.trayBox.minW), this.trayBox.height);
     else {
@@ -1341,11 +1406,12 @@ export class Controller {
     const db = screen.getDisplayMatching(rect).bounds;
     const cur = t.getBounds();
     if (['x', 'y', 'width', 'height'].some((k) => cur[k] !== db[k])) t.setBounds(db);
-    const sizeFits = sizesThatFit(this._bubbleArea(), st.camera.shape);
+    const maxDiam = Math.min(BUBBLE_MAX, maxDiamFor(st.camera.shape, this._bubbleArea()));
+    const camOut = camOnly && this.camDims ? cameraOutputSize(this.camDims.width, this.camDims.height, st.camOnly.aspect, st.quality.size) : null;
     this.trayScreen = box;
     // animate: the bubble is mid preset animation, so the tray glides with it (160 ms)
     // instead of jumping; drags and everything else move it instantly.
-    t.webContents.send('camtray:state', { visible: true, mode, x: box.x - db.x, y: box.y - db.y, width: box.width, popSide, sizeFits, animate: !!this.sizeAnim, camera: this.cameraStatus(), camDims: this.camDims });
+    t.webContents.send('camtray:state', { visible: true, mode, x: box.x - db.x, y: box.y - db.y, width: box.width, popSide, minDiam: BUBBLE_MIN, maxDiam, cameraOnly: camOnly, camOut, animate: !!this.sizeAnim, camera: this.cameraStatus(), camDims: this.camDims });
     if (!t.isVisible()) t.showInactive();
     this._syncBar(); // the toolbar keeps 16 pt clear of bubble + tray (S15)
   }
@@ -1358,30 +1424,37 @@ export class Controller {
     this._syncBubble();
   }
 
-  // ⌘+ / ⌘− with the bubble focused (SETUP_V2 §11.2): the next preset that fits.
+  // ⌘+ / ⌘− with the bubble focused: 10 % bigger / smaller, between the minimum and
+  // what fits the screen.
   stepSize(dir) {
-    if (!this._inSetup()) return false;
-    const { shape, size } = this.settings.get().camera;
-    const fits = sizesThatFit(this._bubbleArea(), shape);
-    let i = SIZES.indexOf(size) + dir;
-    while (i >= 0 && i < SIZES.length && !fits[SIZES[i]]) i += dir;
-    if (i < 0 || i >= SIZES.length) return false;
-    this.settings.patch({ camera: { size: SIZES[i] } });
+    if (!this._inSetup() || this._cameraMode()) return false;
+    const cam = this.settings.get().camera;
+    const cur = clampDiam(cameraDiam(cam), cam.shape, this._bubbleArea());
+    const next = clampDiam(Math.round(cur * (dir > 0 ? 1.1 : 1 / 1.1)), cam.shape, this._bubbleArea());
+    if (next === cur) return false;
+    this.settings.patch({ camera: { diam: next } });
     this._syncBubble();
     return true;
   }
 
-  // Corner handle (SETUP_V2 §3.2, S12): snaps to S/M/L/XL; the anchored corner is
-  // locked for the whole gesture so the bubble can't flip direction mid-drag.
-  bubbleResize({ phase, size }) {
+  // Edge / corner resize (setup, on hover): continuous. The corner opposite the grabbed
+  // edge (the screen anchor on an axis not grabbed) is locked for the whole gesture, so
+  // the bubble can't flip direction mid-drag. The renderer sends that corner with
+  // 'start' and a diameter with each move.
+  bubbleResize({ phase, diam, anchor }) {
     if (phase === 'start') {
-      if (this.bubbleRect) this.resizeAnchor = anchorFor(this._bubbleArea(), this.bubbleRect);
+      const ok = anchor && ['left', 'right'].includes(anchor.h) && ['top', 'bottom'].includes(anchor.v);
+      if (this.bubbleRect) this.resizeAnchor = ok ? { h: anchor.h, v: anchor.v } : anchorFor(this._bubbleArea(), this.bubbleRect);
       return false;
     }
     let changed = false;
-    if (size && SIZES.includes(size) && size !== this.settings.get().camera.size) {
-      this.settings.patch({ camera: { size } });
-      changed = true;
+    const cam = this.settings.get().camera;
+    if (Number.isFinite(diam)) {
+      const d = clampDiam(diam, cam.shape, this._bubbleArea());
+      if (d !== cameraDiam(cam)) {
+        this.settings.patch({ camera: { diam: d } });
+        changed = true;
+      }
     }
     if (phase === 'end') this.resizeAnchor = null;
     if (changed || phase === 'end') this._syncBubble();
@@ -1405,6 +1478,7 @@ export class Controller {
   }
 
   bubbleDrag({ phase, x, y }) {
+    if (this._cameraMode()) return; // the Camera only preview stays centred
     if (phase === 'start') {
       if (!this.bubbleRect) return;
       this.drag = { px: x, py: y, rect: { ...this.bubbleRect } };
@@ -1417,7 +1491,7 @@ export class Controller {
   }
 
   bubbleNudge({ dx, dy }) {
-    if (!this.bubbleRect) return;
+    if (!this.bubbleRect || this._cameraMode()) return;
     this._moveBubble({ ...this.bubbleRect, x: this.bubbleRect.x + dx, y: this.bubbleRect.y + dy }, true, false);
   }
 
@@ -1438,7 +1512,8 @@ export class Controller {
     this.bubbleRect = rect;
     this.wins.bubble.setPosition(rect.x - BUBBLE_PAD, rect.y - BUBBLE_PAD);
     this.wins.bubble.webContents.send('bubble:guides', commit ? {} : guides);
-    if (this._inSetup()) this._syncTray(); // the tray follows the bubble
+    if (this._inSetup()) this._syncTray(); // the tray follows the bubble (the toolbar steps aside)
+    else this._syncBar(); // recording: the bar, collapsed pill included, steps aside too
     if (this.s.state !== 'idle') this._engine('bubble', this._bubbleForEngine()).catch(() => {});
     if (commit) {
       if (windowMode) this.settings.patch({ bubbleRelWindow: relToWindow(this.winBounds, rect) });

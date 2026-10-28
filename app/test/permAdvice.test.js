@@ -47,5 +47,5 @@ test('controller: a stale grant shows the guidance with Open Settings, cleared o
   assert.match(c, /if \(this\.staleGrant && !this\.noticeDismissed\?\.has\('stale'\)\) return \{ kind: 'perm', tone: 'bad', text: STALE_GRANT_TEXT, action: 'Open Settings', wrap: true \}/);
   assert.match(c, /async _startRecording\(\) \{\s*this\.staleGrant = false;/);
   const bar = fs.readFileSync(new URL('../src/renderer/bar/bar.js', import.meta.url), 'utf8');
-  assert.match(bar, /n\.kind === 'perm' \|\| n\.kind === 'micperm'/, 'perm notices get the Open Settings button');
+  assert.match(bar, /const ACT = \{ perm: 'screen-settings', micperm: 'mic-settings', camperm: 'camera-settings' \}/, 'perm notices get the Open Settings button');
 });

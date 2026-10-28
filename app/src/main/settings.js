@@ -4,8 +4,13 @@ import path from 'node:path';
 import os from 'node:os';
 
 export const DEFAULTS = {
+  // mode: 'display' | 'window' | 'camera' (Camera only: just the camera, no screen).
   source: { mode: 'display', displayId: null, windowSourceId: null, windowTitle: null },
-  camera: { on: true, deviceId: null, deviceLabel: null, shape: 'circle', size: 'S', zoom: 1, background: 'none', bgImage: 'builtin:studio', follow: false, mirror: true },
+  // camera.diam: the bubble's size, continuous (pt, circle-equivalent diameter, geometry.js
+  // cameraDiam). null = the older preset in camera.size.
+  camera: { on: true, deviceId: null, deviceLabel: null, shape: 'circle', size: 'S', diam: null, zoom: 1, background: 'none', bgImage: 'builtin:studio', follow: false, mirror: true },
+  // Camera only: the output's aspect ratio ('16:9' | '9:16' | '1:1' | '4:5', geometry.js ASPECTS).
+  camOnly: { aspect: '16:9' },
   // camera.follow: crop tracks the face (off by default: it can jitter). camera.mirror:
   // preview and recording are both flipped like a mirror (on, as before in the preview).
   backgrounds: [], // user-chosen background images: file names in userData/media/backgrounds

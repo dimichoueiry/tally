@@ -11,7 +11,7 @@ let total = 3000;
 tally.on('countdown:show', ({ kind, rect, tag, ms }) => {
   total = ms;
   const frame = $('frame');
-  frame.className = kind === 'window' && rect ? 'win' : 'full';
+  frame.className = rect ? 'win' : 'full'; // a window, or the Camera only preview
   const W = innerWidth, H = innerHeight;
   let cx = W / 2, cy = H / 2;
   if (frame.className === 'win') {
@@ -23,7 +23,7 @@ tally.on('countdown:show', ({ kind, rect, tag, ms }) => {
     frame.removeAttribute('style');
     Object.assign($('tag').style, { left: '14px', top: '40px' });
   }
-  $('tag').innerHTML = `${icon(kind === 'window' ? 'window' : 'monitor', 's14')} ${tag}`;
+  $('tag').innerHTML = `${icon({ window: 'window', camera: 'cam-only' }[kind] || 'monitor', 's14')} ${tag}`;
   Object.assign($('count').style, { left: `${cx}px`, top: `${cy}px` });
   $('ring').style.strokeDasharray = `${C}`;
   $('ring').style.display = reduced ? 'none' : '';

@@ -14,9 +14,23 @@
   <div id="ghost" class="ghost" hidden><span>home · double-click the grip</span></div>
   <div id="box" class="box" hidden>
     <div id="tray" class="ctray glass" role="group" aria-label="Camera options">
-      <!-- Row 1, how big: size presets · zoom (SETUP_V2 §11.1) -->
+      <!-- Row 1, how big: bubble size (continuous, S/M/L/XL detents) or, in Camera only,
+           the output's aspect ratio and resolution -->
+      <div class="row" id="sizeRow">
+        <div class="zoom2 size2">
+          <span class="zi" id="sizeIcon" aria-hidden="true"></span>
+          <div id="sizeTrk" class="trk" role="slider" tabindex="0" aria-label="Bubble size" aria-valuemin="96" aria-valuemax="400" aria-valuenow="220">
+            <i class="rail"></i><i class="fill" id="sfill"></i><span id="sdets"></span><i class="knob" id="sknob"></i>
+          </div>
+          <span class="v wide" id="sv">220 pt</span>
+        </div>
+      </div>
+      <div class="row" id="aspectRow" hidden>
+        <div class="tseg aspect" id="aspects" role="radiogroup" aria-label="Aspect ratio"></div>
+        <span class="outres" id="outres" aria-live="polite"></span>
+      </div>
+      <!-- Row 2: zoom -->
       <div class="row">
-        <div class="tseg size" id="sizes" role="radiogroup" aria-label="Bubble size"></div>
         <div class="zoom2">
           <span class="zi" aria-hidden="true"></span>
           <div id="zoomTrk" class="trk" role="slider" tabindex="0" aria-label="Zoom" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
@@ -28,7 +42,7 @@
       <!-- Row 2, how it looks: shape | background · camera settings · camera off -->
       <div class="row">
         <div class="tseg" id="shapes" role="radiogroup" aria-label="Shape"></div>
-        <span class="vsep" aria-hidden="true"></span>
+        <span class="vsep" id="shapeSep" aria-hidden="true"></span>
         <div class="tseg" id="bgs" role="radiogroup" aria-label="Background"></div>
         <button class="b" id="settingsBtn" aria-label="Camera settings" aria-haspopup="dialog" aria-expanded="false" title="Camera settings"></button>
         <button class="b" id="offBtn" aria-label="Turn camera off" title="Turn camera off"></button>
