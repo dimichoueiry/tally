@@ -11,7 +11,7 @@ function fakeGs(blocked = []) {
     isRegistered: (a) => reg.has(a),
   };
 }
-const handlers = { primary() {}, pause() {}, restart() {}, cancel() {}, camera() {}, notes() {} };
+const handlers = { primary() {}, pause() {}, restart() {}, cancel() {}, camera() {}, fullcam() {}, notes() {} };
 
 test('only ⌥⇧R is registered at launch', () => {
   const gs = fakeGs();

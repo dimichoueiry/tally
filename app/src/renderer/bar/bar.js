@@ -219,6 +219,10 @@ function recHtml() {
         ${ctl('restart', icon('restart'), 'Restart', 'Z')}`,
     };
   }
+  // Full camera (⌥⇧F): screen recordings with the camera on. Lit while full.
+  const full = snap.cameraOn && !snap.cameraOnly && !snap.cameraLost
+    ? ctl('fullcam', icon(snap.fullCam ? 'monitor' : 'cam-only'), snap.fullCam ? 'Back to screen' : 'Full camera', 'F', snap.fullCam ? 'on' : '')
+    : '';
   const chips = [snap.bgStatus === 'paused' ? 'Background paused' : '', snap.autoHidden ? 'Window too small for camera' : ''].filter(Boolean).map((t) => `<span class="chipw">${icon('warn', 's14')}${t}</span>`).join('');
   return {
     label: 'Recording controls',
@@ -228,7 +232,7 @@ function recHtml() {
       <div class="time ${paused ? 'paused' : ''}" role="timer" aria-live="off"><span class="dot ${paused ? 'hold' : 'pulse'}" aria-hidden="true"></span><span id="t">${fmtTime(elapsed())}</span></div>
       <button class="stop" data-k="stop" data-act="stop" aria-label="Stop, ${spoken('R')}" data-tip="Stop" data-key="${keys('R')}"><span class="sq"></span></button>
       ${paused ? ctl('pause', icon('play'), 'Resume', 'P') : ctl('pause', icon('pause'), 'Pause', 'P')}
-      ${extras}${chips}`,
+      ${full}${extras}${chips}`,
   };
 }
 

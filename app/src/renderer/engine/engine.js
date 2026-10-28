@@ -6,7 +6,8 @@
 // finalize step stamps frame N at N/30 s (segments.js), which makes the file CFR.
 import { openCamera, stopStream, FaceTracker, drawBubble, CENTRE } from '../shared/camera.js';
 import { CameraBackground } from '../shared/bg/background.js';
-import { clampZoom, cameraOutputSize, aspectOf } from '../../shared/geometry.js';
+import { clampZoom, cameraOutputSize, aspectOf, RECT_RADIUS } from '../../shared/geometry.js';
+import { sceneProgress, switchScene, sceneBox, SCENE_DIM } from '../../shared/scene.js';
 import { SYSTEM_AUDIO, VIDEO_BPS, AUDIO_BPS } from '../../shared/media.js';
 import { warmEncoder, settleWarmup } from './warmup.js';
 import { pickMic, micConstraints, buildMixGraph, connectInput, disconnectInput, peakOf } from '../../shared/mic.js';
@@ -282,6 +283,9 @@ function compose() {
   ctx.drawImage(sv, dx, dy, dw, dh);
   if (S.kind === 'display' && S.mask) paintMask(S.mask, dx, dy, dw, dh);
 
+  // Full camera (⌥⇧F): 0 = the bubble, 1 = the camera fills the frame over a faded screen.
+  const p = cam ? sceneProgress(S.scene, performance.now()) : 0;
+  if (p > 0) return composeFull(p, dx, dy, dw, dh, fw);
   if (cam && bubble && !bubble.hidden && bubble.rect) {
     // pt → output px: the capture area (display or window, in screen pt) maps onto (dx, dy, dw, dh).
     let k;
@@ -313,6 +317,49 @@ function compose() {
   }
 }
 
+// The bubble's box in output px (where compose draws it), or null when it has no spot.
+function bubbleBox(dx, dy, dw, dh, fw) {
+  const { bubble } = S;
+  if (!bubble?.rect) return null;
+  if (bubble.capture) {
+    const k = dw / bubble.capture.width;
+    return { x: dx + (bubble.rect.x - bubble.capture.x) * k, y: dy + (bubble.rect.y - bubble.capture.y) * k, w: bubble.rect.width * k, h: bubble.rect.height * k, k };
+  }
+  const k = (dw / fw) * (S.captureScale || 2);
+  return { x: dx + 24 * k, y: dy + dh - (24 + bubble.rect.height) * k, w: bubble.rect.width * k, h: bubble.rect.height * k, k };
+}
+
+// Mid switch or full: the screen fades out (dimmed under the camera) while the camera's
+// box grows from the bubble to the whole frame and its corners square off. The camera
+// is cropped to the box's aspect, so when full it fills the frame (cropping its sides
+// on a 16:10 screen); zoom, follow, mirror and background still apply.
+function composeFull(p, dx, dy, dw, dh, fw) {
+  const { ctx, canvas, cam, bubble, face } = S;
+  ctx.fillStyle = `rgba(0,0,0,${(p * SCENE_DIM).toFixed(3)})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const b = bubbleBox(dx, dy, dw, dh, fw) || { x: canvas.width / 2, y: canvas.height / 2, w: 0, h: 0, k: 1 };
+  const shape = bubble?.shape || 'circle';
+  const r0 = shape === 'circle' ? Math.min(b.w, b.h) / 2 : shape === 'squircle' ? Math.min(b.w, b.h) * 0.3 : RECT_RADIUS * b.k;
+  const box = sceneBox(b, canvas, p, r0);
+  if (box.w < 2 || box.h < 2) return;
+  const v = cam.video;
+  const centre = bubble?.follow ? face.update(v) : CENTRE;
+  const zoom = clampZoom(bubble?.zoom ?? 1, v.videoWidth, v.videoHeight);
+  const tb = performance.now();
+  const processed = S.bg?.process(v, { width: box.w, height: box.h, zoom, centre });
+  if (processed) S.perf.bg.push(performance.now() - tb);
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(box.x, box.y, box.w, box.h, box.radius);
+  ctx.clip();
+  drawBubble(ctx, processed || v, {
+    x: box.x, y: box.y, w: box.w, h: box.h,
+    shape, zoom: processed ? 1 : zoom, centre: processed ? CENTRE : centre, mirror: bubble?.mirror !== false, clip: false,
+  });
+  ctx.restore();
+  S.cameraUsed = true;
+}
+
 // Privacy levels: paint the cover's look (or the wallpaper) over the menu-bar / Dock
 // strips. Rects are display pt; the fill image covers the whole display. Pixel edges are
 // rounded outward so no sliver of the real bar shows.
@@ -342,8 +389,9 @@ async function loadMask(mask) {
 function setBackground(b) {
   const mode = b?.background || 'none';
   if (!S?.cam && !S?.camLost) return;
-  // Camera only composites at the output's size (up to 2160 on a side), not bubble size.
-  if (mode !== 'none' && !S.bg) S.bg = new CameraBackground({ log, onStatus: (st) => emit('bg-status', { status: st }), maxSide: S.kind === 'camera' ? 2160 : undefined });
+  // Camera only and full camera (⌥⇧F) composite at the frame's size (up to 2160 a side);
+  // a bubble is far smaller, so its cost is unchanged.
+  if (mode !== 'none' && !S.bg) S.bg = new CameraBackground({ log, onStatus: (st) => emit('bg-status', { status: st }), maxSide: 2160 });
   S.bg?.setMode(mode, b?.bgImage);
 }
 
@@ -564,6 +612,15 @@ const api = {
     return { source: [next.video.videoWidth, next.video.videoHeight] };
   },
 
+  // Full camera and back (⌥⇧F): starts a 400 ms transition from wherever the last one is.
+  // Logged by frame number, for the stop stats.
+  scene({ full }) {
+    if (!S || S.kind === 'camera') return null;
+    S.scene = switchScene(S.scene, !!full, performance.now());
+    (S.sceneLog ||= []).push({ full: !!full, frame: S.frames });
+    return { full: !!full, frame: S.frames };
+  },
+
   bubble(b) {
     if (!S) return;
     const prev = S.bubble;
@@ -619,6 +676,7 @@ const api = {
       mimeType: sess.recorder.mimeType,
       warmup: sess.warmResult || null,
       startEventMs: sess.startEventMs ?? null,
+      scenes: sess.sceneLog || [],
       audio: sess.audio
         ? {
             peak: { system: +sess.audio.peak.system.toFixed(4), mic: +sess.audio.peak.mic.toFixed(4) },

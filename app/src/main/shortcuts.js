@@ -1,10 +1,10 @@
 // Global shortcut lifecycle (spec §4, D2). ⌥⇧R is registered from launch to quit;
-// ⌥⇧P/Z/X/C only while a recording session is active; ⌥⇧N (pause / resume the notes
+// ⌥⇧P/Z/X/C/F only while a recording session is active (F: full camera and back); ⌥⇧N (pause / resume the notes
 // scroll, SETUP_V2 S17) only while a session is active and the notes panel is open. `gs` is Electron's
 // globalShortcut, injected so the lifecycle can be unit-tested.
 
 export const PRIMARY = 'Alt+Shift+R';
-export const SESSION = { pause: 'Alt+Shift+P', restart: 'Alt+Shift+Z', cancel: 'Alt+Shift+X', camera: 'Alt+Shift+C' };
+export const SESSION = { pause: 'Alt+Shift+P', restart: 'Alt+Shift+Z', cancel: 'Alt+Shift+X', camera: 'Alt+Shift+C', fullcam: 'Alt+Shift+F' };
 export const NOTES = 'Alt+Shift+N';
 
 export class Shortcuts {

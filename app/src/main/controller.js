@@ -47,6 +47,7 @@ export class Controller {
     this.bar = { width: FOLDED_W, pos: null, frozen: null, drag: null, place: '' };
     this.trayScreen = null; // the tray's rect on screen (setup), for toolbar avoidance
     this.cameraHidden = false; // ⌥⇧C during a session
+    this.fullCam = false; // ⌥⇧F: the camera fills the video (screen faded), until pressed again
     this.autoHidden = false; // window too small for the bubble
     this.warning = null; // bar notice that needs an answer (source closed)
     this.toast = null; // bar toast: { kind, title, text, sticky } (camera lost, system audio, low disk)
@@ -101,6 +102,7 @@ export class Controller {
       labelled: this.settings.get().recordingsMade < 3,
       target: this.target && { kind: this.target.kind, label: this.target.label },
       cameraOnly: this._cameraMode(),
+      fullCam: this.fullCam,
     };
   }
 
@@ -204,10 +206,32 @@ export class Controller {
     // Camera only: hides / shows the preview; the recording keeps the camera.
     if (!this.settings.get().camera.on && !this._cameraMode()) return;
     this.cameraHidden = !this.cameraHidden;
+    if (this.cameraHidden && this.fullCam) this._setFullCam(false); // hiding the camera ends full camera
     this._syncBubble();
     this._broadcast();
   }
 
+
+  // ⌥⇧F / the bar's button: the camera grows to fill the video and the screen fades
+  // (400 ms, engine scene), and back. Screen recordings only, with the camera on; it
+  // brings a hidden camera back.
+  toggleFullCamera() {
+    if (!LIVE.has(this.s.state) || this.target?.kind === 'camera') return;
+    if (!this.settings.get().camera.on || this.cameraLost) return;
+    if (!this.fullCam && this.cameraHidden) {
+      this.cameraHidden = false;
+      this._syncBubble();
+    }
+    this._setFullCam(!this.fullCam);
+  }
+
+  _setFullCam(on) {
+    if (this.fullCam === on) return;
+    this.fullCam = on;
+    this.log(`full camera ${on ? 'on' : 'off'}`);
+    this._engine('scene', { full: on }).catch(() => {});
+    this._broadcast();
+  }
 
   // Quit requested (signal): a live recording is stopped and saved, a countdown is
   // cancelled. Resolves once the session is idle (finalize can take a few seconds).
@@ -276,6 +300,7 @@ export class Controller {
     this.cameraLost = false;
     this.stopReason = null;
     this.cameraHidden = false;
+    this.fullCam = false; // a restart begins on the screen
     if (this.target.kind === 'window') this._watchWindow();
     this._syncBubble();
     // Clean desktop goes up with the countdown, so the frame and tag show the real result.
@@ -519,6 +544,7 @@ export class Controller {
     if (ev.type === 'camera-lost' && this.s.state !== 'idle') {
       // Screen keeps recording; the video loses the bubble from now (spec §3.8).
       this.cameraLost = true;
+      this._setFullCam(false); // the screen comes back
       const name = (ev.label || 'Camera').replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, '').replace(/ Camera$/, '');
       const text = this.target?.kind === 'camera' ? 'Still recording, a dark frame until it is back. Reconnect it, or stop.' : 'Screen is still recording. Reconnect to bring the camera back.';
       this._toast({ kind: 'camera', icon: 'unplug', title: `${name} disconnected.`, text, sticky: this.target?.kind === 'camera' });
@@ -614,6 +640,7 @@ export class Controller {
       this.sessionDir = null;
       clearTimeout(slow);
       this.lastSaved = res.file;
+      if (stats.scenes?.length) this.log(`full camera switches ${JSON.stringify(stats.scenes)}`);
       this.log(`saved ${res.file} remuxed=${res.remuxed}${res.skipped ? ` (${res.skipped})` : ''} duration=${res.duration} frames=${stats.frames} chunks=${stats.chunks} lateTicks=${stats.lateTicks} generator=${stats.generator} activeMs=${stats.durationMs} mime=${stats.mimeType} warmup=${stats.warmup ? (stats.warmup.ok ? `${stats.warmup.frames}f/${stats.warmup.ms}ms` : `skipped (${stats.warmup.reason})`) : 'none'} startEventMs=${stats.startEventMs}`);
       this.log(`perf ${JSON.stringify({ perf: stats.perf, audio: stats.audio, cpu, net: netSummary })}`);
       this.lastStats = { ...stats, thumb: undefined, cpu, net: netSummary, file: res.file };
@@ -693,6 +720,7 @@ export class Controller {
     this.bar.frozen = null;
     this.warning = null;
     this.cameraHidden = false;
+    this.fullCam = false;
     this.autoHidden = false;
     this._syncBubble();
     this._broadcast();

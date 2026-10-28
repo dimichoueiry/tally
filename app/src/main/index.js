@@ -113,6 +113,7 @@ async function boot() {
       restart: () => ctl.askRestart(),
       cancel: () => ctl.askCancel(),
       camera: () => ctl.toggleCamera(),
+      fullcam: () => ctl.toggleFullCamera(),
       notes: () => ctl.toggleNotesScroll(),
     },
     (accel) => {
@@ -305,6 +306,7 @@ function registerIpc() {
   h('bar:action', (a, arg) => {
     const map = {
       stop: () => ctl.stop(), pause: () => ctl.togglePause(), restart: () => ctl.askRestart(), cancel: () => ctl.askCancel(), camera: () => ctl.toggleCamera(),
+      fullcam: () => ctl.toggleFullCamera(),
       keep: () => ctl.keepGoing(), confirm: () => ctl.confirm(), switch: () => ctl.switchToDisplay(), dismiss: () => ctl.dismissToast(),
       record: () => ctl.recordFromSetup(), close: () => ctl.closeSetup(), now: () => ctl._countdownNow(), 'cancel-countdown': () => ctl.cancelCountdown(),
       'source-display': () => ctl.chooseFullScreen(), 'source-window': () => ctl.startPicker(), 'source-camera': () => ctl.chooseCameraOnly(arg), 'screen-settings': () => perms.openScreenSettings(),
@@ -468,7 +470,7 @@ function devControl() {
     try {
       switch (cmd) {
         case 'state':
-          return out({ cmd, ...ctl.snapshot(), registered: ['Alt+Shift+R', 'Alt+Shift+P', 'Alt+Shift+Z', 'Alt+Shift+X', 'Alt+Shift+C'].filter((a) => globalShortcut.isRegistered(a)) });
+          return out({ cmd, ...ctl.snapshot(), registered: ['Alt+Shift+R', 'Alt+Shift+P', 'Alt+Shift+Z', 'Alt+Shift+X', 'Alt+Shift+C', 'Alt+Shift+F'].filter((a) => globalShortcut.isRegistered(a)) });
         case 'popover': // v1 name kept for old scripts
         case 'setup':
           ctl.openSetup(rest[0] || screen.getPrimaryDisplay().id);
@@ -530,7 +532,7 @@ function devControl() {
         }
         case 'act': {
           // act stop | pause | restart | cancel | camera | keep | confirm | primary | now | esc
-          const map = { stop: () => ctl.stop(), pause: () => ctl.togglePause(), restart: () => ctl.askRestart(), cancel: () => ctl.askCancel(), camera: () => ctl.toggleCamera(), keep: () => ctl.keepGoing(), confirm: () => ctl.confirm(), primary: () => ctl.primary(), now: () => ctl._countdownNow(), esc: () => ctl.cancelCountdown() };
+          const map = { stop: () => ctl.stop(), pause: () => ctl.togglePause(), restart: () => ctl.askRestart(), cancel: () => ctl.askCancel(), camera: () => ctl.toggleCamera(), fullcam: () => ctl.toggleFullCamera(), keep: () => ctl.keepGoing(), confirm: () => ctl.confirm(), primary: () => ctl.primary(), now: () => ctl._countdownNow(), esc: () => ctl.cancelCountdown() };
           await map[rest[0]]();
           return out({ cmd, act: rest[0], state: ctl.state });
         }
