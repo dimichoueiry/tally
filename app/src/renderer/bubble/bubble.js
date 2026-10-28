@@ -289,7 +289,7 @@ document.addEventListener('mouseleave', (e) => {
 });
 
 cam.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || state.cameraOnly) return; // the Camera only preview doesn't move
+  if (e.button !== 0) return;
   const z = zoneAt(e.clientX, e.clientY);
   try {
     cam.setPointerCapture(e.pointerId);

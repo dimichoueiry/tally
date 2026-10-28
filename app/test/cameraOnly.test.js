@@ -1,7 +1,7 @@
 // Camera only: the output's aspect crop, its resolution, and the setup preview frame.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ASPECTS, ASPECT_KEYS, aspectOf, cropRect, cameraOutputSize, cameraPreviewRect, INSET } from '../src/shared/geometry.js';
+import { ASPECTS, ASPECT_KEYS, aspectOf, cropRect, cameraOutputSize, cameraPreviewRect, INSET, anchorFor, resizeAnchored, clampRect } from '../src/shared/geometry.js';
 import { DEFAULTS } from '../src/main/settings.js';
 import { sourceLabel } from '../src/main/library/names.js';
 
@@ -63,6 +63,32 @@ test('setup preview: that ratio, centred, inside the inset, room left under it f
 
 test('mode and ratio are remembered settings; files are named "Camera"', () => {
   assert.equal(DEFAULTS.source.mode, 'display');
-  assert.deepEqual(DEFAULTS.camOnly, { aspect: '16:9' });
+  assert.deepEqual(DEFAULTS.camOnly, { aspect: '16:9', pos: {} }); // pos: centred until dragged
   assert.equal(sourceLabel({ kind: 'camera', aspect: '9:16' }), 'Camera');
+});
+
+test('the preview moves anywhere, corners and bottom edge included; a new ratio keeps its corner', () => {
+  // What the controller does: the drop is clamped to the display bounds (not the work area,
+  // and nothing is reserved for the toolbar), then re-placed from the saved spot.
+  const bounds = { x: 0, y: 0, width: 1512, height: 982 };
+  const wa = { x: 0, y: 33, width: 1512, height: 875 };
+  const r = cameraPreviewRect(wa, '16:9', { trayH: 120 });
+  for (const [x, y] of [[1e4, 1e4], [-1e4, 1e4], [-1e4, -1e4], [1e4, -1e4]]) {
+    const p = clampRect(bounds, { ...r, x, y });
+    assert.ok(p.x === 0 || p.x + p.width === 1512, 'touches a side');
+    assert.ok(p.y === 0 || p.y + p.height === 982, 'touches the top or bottom');
+  }
+  assert.deepEqual(clampRect(bounds, { ...r, x: 300, y: 1e4 }), { ...r, x: 300, y: 982 - r.height }); // bottom edge
+  const corner = clampRect(bounds, { ...r, x: 1e4, y: 1e4 });
+  const tall = cameraPreviewRect(wa, '9:16', { trayH: 120 });
+  const next = resizeAnchored(bounds, corner, tall, anchorFor(bounds, corner));
+  assert.equal(next.x + next.width, 1512);
+  assert.equal(next.y + next.height, 982);
+  close(next.width / next.height, 9 / 16, 0.01);
+});
+
+test('the output is the camera crop alone: where the preview sits never changes it', () => {
+  // cameraOutputSize / cropRect take no position; the engine draws the crop at 0,0 full frame.
+  assert.equal(cameraOutputSize.length, 3); // (camW, camH, aspectKey[, quality])
+  assert.deepEqual(cameraOutputSize(1920, 1080, '9:16'), { width: 1080, height: 1920 });
 });

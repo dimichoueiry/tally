@@ -114,14 +114,16 @@ export function createBar() {
 export const NOTES_PAD = { x: 48, top: 48, bottom: 72 };
 export function createNotes() {
   const win = make('notes', { width: 560 + 2 * NOTES_PAD.x, height: 264 + NOTES_PAD.top + NOTES_PAD.bottom, focusable: true, enableLargerThanScreen: true, ...(isMac ? { type: 'panel' } : {}) });
-  overlayTop(win, 'screen-saver');
+  // Above the bubble (0) and its tray (1), so the panel can be read on top of the camera;
+  // its transparent margin stays click-through, so the bubble under it still works.
+  overlayTop(win, 'screen-saver', 2);
   win.setIgnoreMouseEvents(true, { forward: true });
   return win;
 }
 
 export function createCountdown() {
   const win = make('countdown', { width: 800, height: 600, focusable: true, enableLargerThanScreen: true, ...(isMac ? { type: 'panel' } : {}) });
-  overlayTop(win, 'screen-saver', 2);
+  overlayTop(win, 'screen-saver', 3);
   win.setIgnoreMouseEvents(true);
   return win;
 }

@@ -4,7 +4,7 @@
 export const NOTES_W = 560; // panel width (§12.2)
 export const NOTES_H = 264; // panel height: 8 + text 204 + footer 52 (mockup 15)
 export const DOCK_GAP = 10; // under the menu bar (§12.2)
-export const CLEAR = 16; // gap kept to the toolbar, bubble and tray
+export const CLEAR = 16; // gap kept to the toolbar
 export const SNAP_DOCK = 24; // dragging this close to the dock snaps back to it
 export const FONT = { min: 18, max: 40, step: 2, def: 24 };
 export const WPM = { min: 80, max: 220, step: 10, def: 140 };
@@ -27,12 +27,11 @@ export function dockPos(bounds, wa) {
 
 const overlaps = (a, b, pad) => a.x < b.x + b.width + pad && a.x + a.width + pad > b.x && a.y < b.y + b.height + pad && a.y + a.height + pad > b.y;
 
-// Where the panel sits: the saved spot or the dock. It never covers the toolbar, the
-// bubble or its tray (16 pt clear):
-// - the toolbar at the top pushes the docked panel below it (§15.5);
-// - the bubble / tray push it sideways, to whichever side has room (then down).
-// Always kept on the work area.
-export function placeNotes(bounds, wa, { saved = null, toolbar = null, avoid = [], height = NOTES_H } = {}) {
+// Where the panel sits: the saved spot or the dock, kept on the work area. The toolbar at
+// the top pushes the docked panel below it (§15.5). The camera bubble (and its tray) never
+// push it: the panel may sit on top of the camera, so the script can be read right where
+// the eyes are; it stays above the bubble and is never captured (content protection).
+export function placeNotes(bounds, wa, { saved = null, toolbar = null, height = NOTES_H } = {}) {
   const dock = dockPos(bounds, wa);
   let { x, y } = saved || dock;
   const rect = () => ({ x, y, width: NOTES_W, height });
@@ -43,17 +42,6 @@ export function placeNotes(bounds, wa, { saved = null, toolbar = null, avoid = [
   fit();
   if (toolbar && overlaps(rect(), toolbar, CLEAR)) {
     y = toolbar.y + toolbar.height + CLEAR;
-    fit();
-  }
-  for (const r of avoid.filter(Boolean)) {
-    if (!overlaps(rect(), r, CLEAR)) continue;
-    const left = r.x - CLEAR - NOTES_W;
-    const right = r.x + r.width + CLEAR;
-    const roomL = left >= wa.x;
-    const roomR = right + NOTES_W <= wa.x + wa.width;
-    if (roomL && (!roomR || x + NOTES_W / 2 <= r.x + r.width / 2)) x = left;
-    else if (roomR) x = right;
-    else y = r.y + r.height + CLEAR; // nothing fits beside it: go under it
     fit();
   }
   return { x: Math.round(x), y: Math.round(y), docked: !saved };

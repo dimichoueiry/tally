@@ -9,8 +9,9 @@ export const DEFAULTS = {
   // camera.diam: the bubble's size, continuous (pt, circle-equivalent diameter, geometry.js
   // cameraDiam). null = the older preset in camera.size.
   camera: { on: true, deviceId: null, deviceLabel: null, shape: 'circle', size: 'S', diam: null, zoom: 1, background: 'none', bgImage: 'builtin:studio', follow: false, mirror: true },
-  // Camera only: the output's aspect ratio ('16:9' | '9:16' | '1:1' | '4:5', geometry.js ASPECTS).
-  camOnly: { aspect: '16:9' },
+  // Camera only: the output's aspect ratio ('16:9' | '9:16' | '1:1' | '4:5', geometry.js ASPECTS),
+  // and where the preview was dropped per display (absent = centred; screen pt).
+  camOnly: { aspect: '16:9', pos: {} },
   // camera.follow: crop tracks the face (off by default: it can jitter). camera.mirror:
   // preview and recording are both flipped like a mirror (on, as before in the preview).
   backgrounds: [], // user-chosen background images: file names in userData/media/backgrounds

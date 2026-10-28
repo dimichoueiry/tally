@@ -884,7 +884,7 @@ export class Controller {
     }
     this._placeBar();
     if (!win.isVisible()) win.showInactive();
-    this._syncNotes(); // placed after the toolbar, bubble and tray, so it can keep clear of them
+    this._syncNotes(); // placed after the toolbar, so it can keep clear of it
   }
 
   _barAvoid() {
@@ -1203,8 +1203,8 @@ export class Controller {
     const sameDisplay = String(this._display().id) === String(d.id);
     const saved = st.notes.pos[String(d.id)] || null;
     const toolbar = sameDisplay && this.wins.bar.isVisible() && this.bar.pos ? { x: this.bar.pos.x, y: this.bar.pos.y, width: this.bar.width, height: BAR_H } : null;
-    const avoid = sameDisplay && this._bubbleVisible() ? [this.bubbleRect, this._inSetup() ? this.trayScreen : null] : [];
-    const p = this.notesDrag ? this.notesDrag.pos : placeNotes(d.bounds, d.workArea, { saved, toolbar, avoid });
+    // The bubble and tray don't push the panel: it may sit over the camera (above it).
+    const p = this.notesDrag ? this.notesDrag.pos : placeNotes(d.bounds, d.workArea, { saved, toolbar });
     this.notesPos = p;
     const b = { x: p.x - NOTES_PAD.x, y: p.y - NOTES_PAD.top, width: NOTES_W + 2 * NOTES_PAD.x, height: NOTES_H + NOTES_PAD.top + NOTES_PAD.bottom };
     const cur = win.getBounds();
@@ -1327,8 +1327,16 @@ export class Controller {
     let anchor = null;
     this.autoHidden = false;
     if (camOnly) {
-      // Centred, with room for the tray and the toolbar under it; never saved.
-      rect = cameraPreviewRect(this._displayArea(), st.camOnly.aspect, { trayH: this.trayBox.height });
+      // Sized to leave room for the tray and the toolbar; centred until dragged, then
+      // where it was dropped (per display), anywhere on it like the bubble. The output is
+      // the camera crop alone, so the spot never changes what records.
+      const def = cameraPreviewRect(this._displayArea(), st.camOnly.aspect, { trayH: this.trayBox.height });
+      const saved = st.camOnly.pos?.[this._currentDisplayId()];
+      if (saved) {
+        const area = this._bubbleArea();
+        const prev = { x: saved.x, y: saved.y, width: saved.width ?? def.width, height: saved.height ?? def.height };
+        rect = resizeAnchored(area, prev, { width: def.width, height: def.height }, anchorFor(area, prev));
+      } else rect = def;
     } else if (this._windowMode()) {
       const r = constrainToWindow(this.winBounds, shape, size, st.bubbleRelWindow || { left: INSET, bottom: INSET });
       if (r.hidden) this.autoHidden = true;
@@ -1506,7 +1514,6 @@ export class Controller {
   }
 
   bubbleDrag({ phase, x, y }) {
-    if (this._cameraMode()) return; // the Camera only preview stays centred
     if (phase === 'start') {
       if (!this.bubbleRect) return;
       this.drag = { px: x, py: y, rect: { ...this.bubbleRect } };
@@ -1519,7 +1526,7 @@ export class Controller {
   }
 
   bubbleNudge({ dx, dy }) {
-    if (!this.bubbleRect || this._cameraMode()) return;
+    if (!this.bubbleRect) return;
     this._moveBubble({ ...this.bubbleRect, x: this.bubbleRect.x + dx, y: this.bubbleRect.y + dy }, true, false);
   }
 
@@ -1544,8 +1551,10 @@ export class Controller {
     else this._syncBar(); // recording: the bar, collapsed pill included, steps aside too
     if (this.s.state !== 'idle') this._engine('bubble', this._bubbleForEngine()).catch(() => {});
     if (commit) {
+      const spot = { [this._currentDisplayId()]: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } };
       if (windowMode) this.settings.patch({ bubbleRelWindow: relToWindow(this.winBounds, rect) });
-      else this.settings.patch({ bubblePos: { [this._currentDisplayId()]: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } } });
+      else if (this._cameraMode()) this.settings.patch({ camOnly: { pos: spot } });
+      else this.settings.patch({ bubblePos: spot });
       if (this._inSetup()) this._syncBubble(); // anchor (handle corner) may have changed
     }
   }

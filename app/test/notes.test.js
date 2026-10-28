@@ -34,13 +34,10 @@ test('a toolbar dragged to the top pushes the docked panel below it (§15.5)', (
   assert.ok(!hits(R(p), toolbar));
 });
 
-test('never covers the bubble or its tray: moves sideways, 16 pt clear', () => {
-  const bubble = { x: 600, y: 60, width: 280, height: 280 }; // dragged up under the lens
-  const tray = { x: 600, y: 348, width: 332, height: 90 };
-  const p = placeNotes(bounds, wa, { avoid: [bubble, tray] });
-  for (const r of [bubble, tray]) assert.ok(!hits(R(p), { x: r.x - CLEAR + 1, y: r.y - CLEAR + 1, width: r.width + 2 * CLEAR - 2, height: r.height + 2 * CLEAR - 2 }), JSON.stringify(p));
-  // the default bottom-left bubble is nowhere near: the panel stays docked
-  assert.deepEqual(placeNotes(bounds, wa, { avoid: [{ x: 24, y: 600, width: 220, height: 220 }] }).x, dockPos(bounds, wa).x);
+test('may sit on top of the camera bubble: a saved spot over it is kept', () => {
+  const spot = { x: 600, y: 300 }; // dragged onto a bubble at 600,260 280×280
+  assert.deepEqual(placeNotes(bounds, wa, { saved: spot }), { ...spot, docked: false });
+  assert.deepEqual(placeNotes(bounds, wa, { saved: spot, avoid: [{ x: 600, y: 260, width: 280, height: 280 }] }), { ...spot, docked: false });
 });
 
 test('a dragged panel keeps its spot; near the dock it snaps back', () => {

@@ -48,5 +48,4 @@
 .wrap.tiny .bub-hud .zoom, .wrap.tiny .bub-hud [data-z], .wrap.tiny .bub-hud .sep { display: none; }
 .wrap.tiny .bub-tag { top: 8px; }
 /* Camera only: the preview is fixed (centred) and shows exactly the recorded frame. */
-.wrap.camonly .cam { cursor: default; }
 .wrap.camonly .sizeh, .wrap.camonly .bub-grip { display: none; }
